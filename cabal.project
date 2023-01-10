@@ -23,13 +23,18 @@ packages: .
 
 source-repository-package
   type: git
+  --sha256: sha256-K4FNHQUpq4V0XkP1AUfnwFtOc2BMK007dv9aAgFStVs=
   location: https://github.com/Plutonomicon/plutarch-plutus.git
   tag: 95e40b42a1190191d0a07e3e4e938b72e6f75268
-
+  subdir:
+    .
+    plutarch-extra
+    
 source-repository-package
   type: git
+  --sha256-hX2nxIpyJWTqQnllc9bLIqQH3LXtLxof56TYkMPSOZ0=
   location: https://github.com/mlabs-haskell/ply
-  tag: 9392e86e39ed12c56828a81ad55b7dd12aba224c
+  tag: 2cda3b44f87c659980bea2bc0b4a822d1e9eaef4
   subdir: ply-core
 
 constraints:
