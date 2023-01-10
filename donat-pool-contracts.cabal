@@ -1,3 +1,4 @@
+cabal-version:       3.6
 name:                donat-pool-contracts
 version:             0.1.0.0
 license:             
@@ -6,19 +7,18 @@ maintainer:          oklimenko92@mail.ru
 build-type:          Simple
 extra-source-files:  CHANGELOG.md, README.md
 
-cabal-version: 3
 
 common common-configs
   default-language: Haskell2010
 
 common common-deps
   build-depends:
-    , base >=4.12 && <4.13
+    , base
     , plutarch
     , ply-core
-    -- , plutus-core
-    -- , plutus-ledger-api
-    -- , plutus-tx
+    , plutus-core
+    , plutus-ledger-api
+    , plutus-tx
     , text
 
 common common-lang
@@ -31,10 +31,10 @@ library
   import:         common-deps
   hs-source-dirs: src
 
-
 executable donat-pool-contracts
   import:         common-lang
   import:         common-configs
   import:         common-deps
   main-is:        Main.hs
-  hs-source-dirs:      app
+  hs-source-dirs: app
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
