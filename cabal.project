@@ -35,7 +35,9 @@ source-repository-package
   location: https://github.com/mlabs-haskell/ply
   tag: 2cda3b44f87c659980bea2bc0b4a822d1e9eaef4
   --sha256: sha256-hX2nxIpyJWTqQnllc9bLIqQH3LXtLxof56TYkMPSOZ0=
-  subdir: ply-core
+  subdir: 
+    ply-core
+    ply-plutarch
 
 constraints:
   dependent-sum >= 0.7.1.0

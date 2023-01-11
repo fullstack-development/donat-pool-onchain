@@ -13,4 +13,4 @@ GHC 9.2.5
 Cabal 3.6.2.0
 ```
 
-run `cabal build all` to check if there are no errors with dependencies.
+run `nix develop` and then `cabal build all` to compile project.
