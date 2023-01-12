@@ -14,3 +14,7 @@ Cabal 3.6.2.0
 ```
 
 run `nix develop` and then `cabal build all` to compile project.
+
+# Compiling Plutus scripts
+
+For compiling Plutus scripts make sure that you have `compiled` folder in the project root and run `cabal run`.
