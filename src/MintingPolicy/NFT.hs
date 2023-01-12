@@ -7,10 +7,10 @@ import Generics.SOP
 import Plutarch.Prelude hiding (Generic)
 import Plutarch.DataRepr
 import Plutarch.Builtin
+import qualified Plutarch.Monadic as P
 
 data PNftRedeemer (s :: S) 
-  = --PMintingAction (Term s (PDataRecord '["isMinting" :: PBool])) 
-  PMintNft (Term s (PDataRecord '[])) 
+  = PMintNft (Term s (PDataRecord '[])) 
   | PBurnNft (Term s (PDataRecord '[])) 
   deriving stock (GHC.Generic)
   deriving anyclass (Generic)
@@ -21,29 +21,24 @@ instance DerivePlutusType PNftRedeemer where
 
 instance PTryFrom PData PNftRedeemer
 
-
-
 nftPolicy :: ClosedTerm (PTxOutRef :--> PTokenName :--> PMintingPolicy)
-nftPolicy = plam $ \ref tn rdm' ctx' -> popaque $
-  unTermCont $ do
-    ctx <- tcont $ pletFields @'["txInfo", "purpose"] ctx'
-    PMinting mintFlds <- tcont . pmatch $ getField @"purpose" ctx
+nftPolicy = plam $ \ref tn rdm' ctx' -> P.do
+    (rdm, _) <- ptryFrom @PNftRedeemer rdm'
+    ctx <- pletFields @'["txInfo", "purpose"] ctx'
+    PMinting mintFlds <- pmatch $ getField @"purpose" ctx
     let ownSym = pfield @"_0" # mintFlds
-    txInfo <- tcont $ pletFields @'["inputs", "mint"] $ getField @"txInfo" ctx
-    
-    -- add getting redeemer 
-    rdm <- fst <$> tcont $ ptryFrom @PNftRedeemer rdm'
-   -- rdm <- rdmM
-   -- rdm <- tcont . pmatch . fst <$> ptryFrom @PNftRedeemer rdm'
-    case rdm of 
-      PMintNft _ -> do     
-        pguardC "UTxO not consumed" $
-          pany # plam (\x -> pfield @"outRef" # x #== pdata ref) #$ pfromData $
-            getField @"inputs" txInfo
-        pguardC "Wrong NFT mint amount" $
-          PValue.pvalueOf # getField @"mint" txInfo # ownSym # tn #== 1
-    --  _ -> tcont $ ptraceError "Wrong Redeemer type"
-    pure $ pconstant ()
-
-pguardC :: Term s PString -> Term s PBool -> TermCont s ()
-pguardC s cond = tcont $ \f -> pif cond (f ()) $ ptraceError s
+    txInfo <- pletFields @'["inputs", "mint"] $ getField @"txInfo" ctx
+    pmatch rdm $ \case 
+      PMintNft _ -> popaque $
+        pif 
+          (pany # plam (\x -> pfield @"outRef" # x #== pdata ref) #$ pfromData $ getField @"inputs" txInfo)
+          (pif 
+              (PValue.pvalueOf # getField @"mint" txInfo # ownSym # tn #== 1)
+              (pconstant ())
+              (ptraceError "Wrong NFT mint amount"))
+          (ptraceError "UTxO not consumed")
+      PBurnNft _ -> popaque $ 
+        pif 
+            (PValue.pvalueOf # getField @"mint" txInfo # ownSym # tn #== -1)
+            (pconstant ())
+            (ptraceError "Wrong NFT mint amount")
