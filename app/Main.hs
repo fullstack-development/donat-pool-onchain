@@ -2,17 +2,21 @@ module Main (main) where
 
 import System.FilePath ((</>))
 
-import Plutarch (Config (Config, tracingMode), TracingMode (DoTracing))
+import Plutarch
 import Ply.Plutarch
 
+import Ext.Ply.Plutarch.TypedWriter
 import MintingPolicy.NFT (nftPolicy)
+import Validator.AlwaysSucceeds (alwaysSucceedsValidator)
 
--- TODO: change the directory path when we know where to put compiled scripts
--- Compiles all the scripts and put them to files in the "compiled"s folder
+-- Compiles scripts and put them to files in the "compiled"s folder
 main :: IO ()
-main =
-  writeTypedScript
-    (Config {tracingMode = DoTracing})
+main = do
+  writeTypedScriptTraced
     "NFT Minting Policy"
-    ("compiled" </> "nftPolicy.plutus")
+    "nftPolicy.plutus"
     nftPolicy
+  writeTypedScriptTraced
+    "Always Succeeds Validator"
+    "alwaysSucceedsValidator.plutus"
+    alwaysSucceedsValidator
