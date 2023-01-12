@@ -15,7 +15,6 @@ common common-configs
 common common-deps
   build-depends:
     , base
-    , filepath
     , plutarch
     , plutus-core
     , plutus-ledger-api
@@ -23,6 +22,8 @@ common common-deps
     , ply-core
     , ply-plutarch
     , text
+    , filepath
+    , generics-sop
 
 common common-lang
   default-extensions:
