@@ -16,6 +16,7 @@ common common-deps
   build-depends:
     , base
     , filepath
+    , generics-sop
     , plutarch
     , plutus-core
     , plutus-ledger-api
@@ -88,6 +89,8 @@ library
   exposed-modules:
     Ext.Ply.Plutarch.TypedWriter
     MintingPolicy.NFT
+    Protocol.Datum
+    Protocol.Redeemer
     Validator.AlwaysSucceeds
 
 executable donat-pool-contracts
