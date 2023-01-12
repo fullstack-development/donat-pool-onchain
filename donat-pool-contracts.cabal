@@ -22,15 +22,71 @@ common common-deps
     , ply-core
     , ply-plutarch
     , text
+    , filepath
 
 common common-lang
-  default-extensions: OverloadedStrings
+  default-extensions:
+    NoStarIsType
+    BangPatterns
+    BinaryLiterals
+    ConstrainedClassMethods
+    ConstraintKinds
+    DataKinds
+    DeriveAnyClass
+    DeriveDataTypeable
+    DeriveFoldable
+    DeriveFunctor
+    DeriveGeneric
+    DeriveLift
+    DeriveTraversable
+    DerivingStrategies
+    DerivingVia
+    DoAndIfThenElse
+    EmptyCase
+    EmptyDataDecls
+    EmptyDataDeriving
+    ExistentialQuantification
+    ExplicitForAll
+    FlexibleContexts
+    FlexibleInstances
+    ForeignFunctionInterface
+    GADTSyntax
+    GeneralisedNewtypeDeriving
+    HexFloatLiterals
+    ImplicitPrelude
+    InstanceSigs
+    KindSignatures
+    LambdaCase
+    MonomorphismRestriction
+    MultiParamTypeClasses
+    NamedFieldPuns
+    NamedWildCards
+    NumericUnderscores
+    OverloadedRecordDot
+    OverloadedStrings
+    PatternGuards
+    PolyKinds
+    PostfixOperators
+    RankNTypes
+    RelaxedPolyRec
+    ScopedTypeVariables
+    StandaloneDeriving
+    StandaloneKindSignatures
+    TraditionalRecordSyntax
+    TupleSections
+    TypeApplications
+    TypeFamilyDependencies
+    TypeOperators
+    TypeSynonymInstances
+    ViewPatterns
 
 library
   import:         common-lang
   import:         common-configs
   import:         common-deps
   hs-source-dirs: src
+  exposed-modules:
+    MintingPolicy.NFT
 
 executable donat-pool-contracts
   import:         common-lang
@@ -39,3 +95,5 @@ executable donat-pool-contracts
   main-is:        Main.hs
   hs-source-dirs: app
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  build-depends: 
+    donat-pool-contracts
