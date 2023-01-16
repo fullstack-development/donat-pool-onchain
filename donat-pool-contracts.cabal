@@ -68,6 +68,7 @@ common common-lang
     PatternGuards
     PolyKinds
     PostfixOperators
+    QualifiedDo
     RankNTypes
     RelaxedPolyRec
     ScopedTypeVariables
