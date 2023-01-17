@@ -7,6 +7,7 @@ import Ply.Plutarch
 
 import Ext.Ply.Plutarch.TypedWriter
 import MintingPolicy.NFT (nftPolicy)
+import Protocol.Validator
 import Validator.AlwaysSucceeds (alwaysSucceedsValidator)
 
 -- Compiles scripts and put them to files in the "compiled"s folder

@@ -13,3 +13,5 @@ data PProtocolRedeemer (s :: S)
 
 instance DerivePlutusType PProtocolRedeemer where
   type DPTStrat _ = PlutusTypeData
+
+instance PTryFrom PData PProtocolRedeemer
