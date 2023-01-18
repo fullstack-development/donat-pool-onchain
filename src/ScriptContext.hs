@@ -134,4 +134,4 @@ checkNoOutputs ctx = do
   outputs <- findOwnOutputs ctx
   pmatchC outputs >>= \case
     PNil -> pure $ pconstant ()
-    PCons _ _ -> pure $ ptraceError "more then 1 outputs found in context, expected 0"
+    PCons _ _ -> pure $ ptraceError "1 or more outputs found in context, expected 0"
