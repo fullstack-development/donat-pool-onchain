@@ -18,6 +18,7 @@ common common-deps
     , filepath
     , generics-sop
     , plutarch
+    , plutarch-extra
     , plutus-core
     , plutus-ledger-api
     , plutus-tx
