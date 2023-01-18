@@ -89,8 +89,14 @@ library
   import:          common-deps
   hs-source-dirs:  src
   exposed-modules:
+    Ext.Plutus.MinAda
     Ext.Ply.Plutarch.TypedWriter
     MintingPolicy.NFT
+    Protocol.Datum
+    Protocol.Model
+    Protocol.Redeemer
+    Protocol.Validator
+    ScriptContext
     Validator.AlwaysSucceeds
 
 executable donat-pool-contracts
