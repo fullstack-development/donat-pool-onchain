@@ -21,3 +21,7 @@ main = do
     "Always Succeeds Validator"
     "alwaysSucceedsValidator.plutus"
     alwaysSucceedsValidator
+  writeTypedScriptTraced
+    "Protocol Validator"
+    "protocolValidator.plutus"
+    protocolValidator

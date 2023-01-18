@@ -7,32 +7,6 @@ import Plutarch.DataRepr
 import Plutarch.Prelude
 import Ply.Plutarch.Class
 
--- TODO: move to model
-newtype PProtocol (s :: S)
-  = PProtocol
-      ( Term
-          s
-          ( PDataRecord
-              '[ "managerPkh" ':= PPubKeyHash
-               , "protocolCurrency" ':= PCurrencySymbol
-               , "protocolTokenName" ':= PTokenName
-               ]
-          )
-      )
-  deriving stock (GHC.Generic)
-  deriving anyclass (PlutusType, PIsData, PDataFields, PShow, Typeable)
-
-instance DerivePlutusType PProtocol where
-  type DPTStrat _ = PlutusTypeNewtype
-
-instance PTryFrom PData (PAsData PProtocol)
-
-protocolSymbol :: Term s PProtocol -> Term s PCurrencySymbol
-protocolSymbol protocol = pfield @"protocolCurrency" # protocol
-
-protocolToken :: Term s PProtocol -> Term s PTokenName
-protocolToken protocol = pfield @"protocolTokenName" # protocol
-
 newtype PPoolSizeLimits (s :: S)
   = PPoolSizeLimits
       ( Term

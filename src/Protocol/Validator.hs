@@ -2,6 +2,7 @@
 
 module Protocol.Validator where
 
+import Ext.Plutus.MinAda
 import Generics.SOP
 import Plutarch.Api.V1
 import Plutarch.Api.V1.Value
@@ -14,19 +15,17 @@ import Plutarch.Prelude
 import PlutusCore (Closed)
 import qualified PlutusCore as PLC
 import Protocol.Datum
+import Protocol.Model
 import Protocol.Redeemer
 import ScriptContext
 
+-- TODO: Add config values validation for updateProtocol
 -- validate config values:
 -- -- minPoolSize >= minAdaTxOutAmount
 -- -- maxPoolSize ?
 -- -- minDuration >= 1 day
 -- -- maxDuration <= 90 days
 -- -- fee > 0 and < 100 %
-
--- {-# INLINEABLE validateStabilityFee #-}
--- validateStabilityFee :: Rational -> Bool
--- validateStabilityFee stabilityFee = stabilityFee >= Ratio.fromInteger 0 && stabilityFee < Ratio.fromInteger 1
 
 protocolValidator :: ClosedTerm (PProtocol :--> PValidator)
 protocolValidator = plam $ \protocol datm redm ctx -> P.do
@@ -40,15 +39,19 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
       checkUpdateProtocolOutput protocol dat newConf ctx
       pure $ pconstant ()
     PCloseProtocol _ -> popaque . unTermCont $ do
-      pure $ pconstant () -- TODO
+      txInfo <- getCtxInfoForSpending ctx
+      checkNoOutputs ctx
+      checkNftBurned protocol txInfo
+      checkManagerReceiveMinAda protocol txInfo
+      pure $ pconstant ()
 
 checkSignedByManager :: Term s PProtocol -> Term s PScriptContext -> TermCont s ()
 checkSignedByManager protocol ctx' = do
-  ctxInfo <- getCtxInfoForSpending ctx'
-  let signatories = pfield @"signatories" # ctxInfo
-  let managerPkg = pfield @"managerPkh" # protocol
-  let present = pelem # pdata managerPkg # pfromData signatories
-  pguardC "Wrong pkh" $ pelem # pdata managerPkg # pfromData signatories
+  txInfo <- getCtxInfoForSpending ctx'
+  let signatories = pfield @"signatories" # txInfo
+  let managerPkh = pfield @"managerPkh" # protocol
+  let present = pelem # pdata managerPkh # pfromData signatories
+  pguardC "Wrong pkh" $ pelem # pdata managerPkh # pfromData signatories
 
 checkConfigChanged :: Term s PProtocolDatum -> Term s PProtocolConfig -> TermCont s ()
 checkConfigChanged datm newConf = P.do
@@ -66,7 +69,7 @@ checkUpdateProtocolDatum :: Term s PProtocolDatum -> Term s PProtocolConfig -> T
 checkUpdateProtocolDatum inDatum newConf ctx txOut = do
   outDatum <- pfromData <$> getOwnOutputDatumFromTxOut ctx txOut
   pguardC "protocol constants shouldn't be changed" (pfield @"protocolConstants" # inDatum #== pfield @"protocolConstants" # outDatum)
-  pguardC "protocol config changed unexpectable" (pfield @"protocolConfig" # outDatum #== newConf)
+  pguardC "protocol config changed unexpectedly" (pfield @"protocolConfig" # outDatum #== newConf)
   pure ()
 
 checkUpdateProtocolValue :: Term s PProtocol -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
@@ -77,3 +80,9 @@ checkUpdateProtocolValue protocol ctx txOut = do
   let threadTokenAmount = pvalueOf # outValue # protocolSymbol protocol # protocolToken protocol
   pguardC "protocol thread token isn't in value" (threadTokenAmount #== 1)
   pure ()
+
+checkNftBurned :: Term s PProtocol -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkNftBurned protocol = checkNftBurnt (protocolSymbol protocol) (protocolToken protocol)
+
+checkManagerReceiveMinAda :: Term s PProtocol -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkManagerReceiveMinAda protocol = checkPkhReceiveScriptValue (pfield @"managerPkh" # protocol) minTxOut
