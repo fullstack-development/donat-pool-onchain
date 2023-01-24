@@ -62,8 +62,8 @@ instance DerivePlutusType PProtocolConfig where
 
 instance PTryFrom PData (PAsData PProtocolConfig)
 
-newtype ProtocolConstants (s :: S)
-  = ProtocolConstants
+newtype PProtocolConstants (s :: S)
+  = PProtocolConstants
       ( Term
           s
           ( PDataRecord
@@ -77,18 +77,18 @@ newtype ProtocolConstants (s :: S)
   deriving stock (GHC.Generic)
   deriving anyclass (PlutusType, PIsData, PDataFields, PShow)
 
-instance DerivePlutusType ProtocolConstants where
+instance DerivePlutusType PProtocolConstants where
   type DPTStrat _ = PlutusTypeData
 
-instance PTryFrom PData ProtocolConstants
-instance PTryFrom PData (PAsData ProtocolConstants)
+instance PTryFrom PData PProtocolConstants
+instance PTryFrom PData (PAsData PProtocolConstants)
 
 newtype PProtocolDatum (s :: S)
   = PProtocolDatum
       ( Term
           s
           ( PDataRecord
-              '[ "protocolConstants" ':= ProtocolConstants
+              '[ "protocolConstants" ':= PProtocolConstants
                , "protocolConfig" ':= PProtocolConfig
                ]
           )
