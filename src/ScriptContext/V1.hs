@@ -1,7 +1,8 @@
 {-# LANGUAGE QualifiedDo #-}
 
-module ScriptContext where
+module ScriptContext.V1 where
 
+-- TODO: remove when V2 will be tested
 import Generics.SOP
 import Plutarch.Api.V1
 import Plutarch.Api.V1.Value

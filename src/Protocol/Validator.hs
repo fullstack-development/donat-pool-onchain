@@ -2,13 +2,13 @@
 
 module Protocol.Validator where
 
+import Ext.Plutarch.Extra.ApiV2
 import Ext.Plutus.MinAda
 import Generics.SOP
-import Plutarch.Api.V1
 import Plutarch.Api.V1.Value
+import Plutarch.Api.V2
 import Plutarch.Builtin
 import Plutarch.DataRepr
-import Plutarch.Extra.Api
 import Plutarch.Extra.TermCont
 import qualified Plutarch.Monadic as P
 import Plutarch.Prelude
@@ -17,7 +17,7 @@ import qualified PlutusCore as PLC
 import Protocol.Datum
 import Protocol.Model
 import Protocol.Redeemer
-import ScriptContext
+import ScriptContext.V2
 
 -- TODO: Add config values validation for updateProtocol
 -- validate config values:
@@ -67,7 +67,8 @@ checkUpdateProtocolOutput protocol inDatum newConf ctx = do
 
 checkUpdateProtocolDatum :: Term s PProtocolDatum -> Term s PProtocolConfig -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkUpdateProtocolDatum inDatum newConf ctx txOut = do
-  outDatum <- pfromData <$> getOwnOutputDatumFromTxOut ctx txOut
+  outDatum' <- inlineDatumFromOutput ctx txOut
+  (outDatum, _) <- ptryFromC @PProtocolDatum outDatum'
   pguardC "protocol constants shouldn't be changed" (pfield @"protocolConstants" # inDatum #== pfield @"protocolConstants" # outDatum)
   pguardC "protocol config changed unexpectedly" (pfield @"protocolConfig" # outDatum #== newConf)
   pure ()
