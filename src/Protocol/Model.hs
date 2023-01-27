@@ -8,7 +8,7 @@ import Plutarch.Prelude
 import PlutusLedgerApi.V1 (CurrencySymbol, PubKeyHash, TokenName)
 import Ply.Plutarch.Class
 
-newtype PProtocol (s :: S)
+data PProtocol (s :: S)
   = PProtocol
       ( Term
           s
@@ -23,7 +23,7 @@ newtype PProtocol (s :: S)
   deriving anyclass (PlutusType, PIsData, PDataFields, PShow, Typeable)
 
 instance DerivePlutusType PProtocol where
-  type DPTStrat _ = PlutusTypeNewtype
+  type DPTStrat _ = PlutusTypeData
 
 instance PTryFrom PData (PAsData PProtocol)
 
