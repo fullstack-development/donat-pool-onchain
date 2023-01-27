@@ -1,6 +1,6 @@
 module MintingPolicy.NFT (nftPolicy) where 
 
-import Plutarch.Api.V1
+import Plutarch.Api.V2
 import qualified Plutarch.Api.V1.Value as PValue
 import qualified GHC.Generics as GHC
 import Generics.SOP

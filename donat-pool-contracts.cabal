@@ -100,6 +100,7 @@ library
     ScriptContext.V1
     ScriptContext.V2
     Validator.AlwaysSucceeds
+    Validator.TestValidator
 
 executable donat-pool-contracts
   import:         common-lang

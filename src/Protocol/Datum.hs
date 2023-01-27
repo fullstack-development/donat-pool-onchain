@@ -7,7 +7,7 @@ import Plutarch.DataRepr
 import Plutarch.Prelude
 import Ply.Plutarch.Class
 
-newtype PPoolSizeLimits (s :: S)
+data PPoolSizeLimits (s :: S)
   = PPoolSizeLimits
       ( Term
           s
@@ -21,11 +21,12 @@ newtype PPoolSizeLimits (s :: S)
   deriving anyclass (PlutusType, PIsData, PDataFields, PShow, PEq)
 
 instance DerivePlutusType PPoolSizeLimits where
-  type DPTStrat _ = PlutusTypeNewtype
+  type DPTStrat _ = PlutusTypeData
 
 instance PTryFrom PData (PAsData PPoolSizeLimits)
+instance PTryFrom PData PPoolSizeLimits
 
-newtype PDurationLimits (s :: S)
+data PDurationLimits (s :: S)
   = PDurationLimits
       ( Term
           s
@@ -39,11 +40,12 @@ newtype PDurationLimits (s :: S)
   deriving anyclass (PlutusType, PIsData, PDataFields, PShow, PEq)
 
 instance DerivePlutusType PDurationLimits where
-  type DPTStrat _ = PlutusTypeNewtype
+  type DPTStrat _ = PlutusTypeData
 
 instance PTryFrom PData (PAsData PDurationLimits)
+instance PTryFrom PData PDurationLimits
 
-newtype PProtocolConfig (s :: S)
+data PProtocolConfig (s :: S)
   = PProtocolConfig
       ( Term
           s
@@ -58,11 +60,13 @@ newtype PProtocolConfig (s :: S)
   deriving anyclass (PlutusType, PIsData, PDataFields, PShow, PEq)
 
 instance DerivePlutusType PProtocolConfig where
-  type DPTStrat _ = PlutusTypeNewtype
+  type DPTStrat _ = PlutusTypeData
+
+instance PTryFrom PData PProtocolConfig
 
 instance PTryFrom PData (PAsData PProtocolConfig)
 
-newtype PProtocolConstants (s :: S)
+data PProtocolConstants (s :: S)
   = PProtocolConstants
       ( Term
           s
@@ -83,7 +87,7 @@ instance DerivePlutusType PProtocolConstants where
 instance PTryFrom PData PProtocolConstants
 instance PTryFrom PData (PAsData PProtocolConstants)
 
-newtype PProtocolDatum (s :: S)
+data PProtocolDatum (s :: S)
   = PProtocolDatum
       ( Term
           s
