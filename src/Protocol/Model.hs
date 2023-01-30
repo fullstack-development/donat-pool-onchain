@@ -40,3 +40,36 @@ data Protocol = Protocol
   }
 
 type instance PlyArgOf PProtocol = Protocol
+
+data PProtocolConfig (s :: S)
+  = PProtocolConfig
+      ( Term
+          s
+          ( PDataRecord
+              '[ "minAmount" ':= PInteger
+               , "maxAmount" ':= PInteger
+               , "minDuration" ':= PInteger
+               , "maxDuration" ':= PInteger
+               , "protocolFee" ':= PRational
+               ]
+          )
+      )
+  deriving stock (GHC.Generic)
+  deriving anyclass (PlutusType, PIsData, PDataFields, PShow, Typeable)
+
+instance DerivePlutusType PProtocolConfig where
+  type DPTStrat _ = PlutusTypeData
+
+instance PTryFrom PData PProtocolConfig
+
+instance PTryFrom PData (PAsData PProtocolConfig)
+
+data ProtocolConfig = ProtocolConfig
+  { minAmount :: Integer
+  , maxAmount :: Integer
+  , minDuration :: Integer
+  , maxDuration :: Integer
+  , protocolFee :: Rational
+  }
+
+type instance PlyArgOf PProtocolConfig = ProtocolConfig
