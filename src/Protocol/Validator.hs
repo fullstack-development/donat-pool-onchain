@@ -77,7 +77,3 @@ checkUpdateProtocolValue protocol ctx txOut = do
 
 checkNftBurned :: Term s PProtocol -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkNftBurned protocol = checkNftBurnt (protocolSymbol protocol) (protocolToken protocol)
-
--- TODO: Need to be tested (txout may also contain the charge)
--- checkManagerReceiveMinAda :: Term s PProtocol -> Term s (PAsData PTxInfo) -> TermCont s ()
--- checkManagerReceiveMinAda protocol = checkPkhReceiveScriptValue (pfield @"managerPkh" # protocol) minTxOut

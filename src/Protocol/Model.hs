@@ -63,13 +63,3 @@ instance DerivePlutusType PProtocolConfig where
 instance PTryFrom PData PProtocolConfig
 
 instance PTryFrom PData (PAsData PProtocolConfig)
-
-data ProtocolConfig = ProtocolConfig
-  { minAmount :: Integer
-  , maxAmount :: Integer
-  , minDuration :: Integer
-  , maxDuration :: Integer
-  , protocolFee :: Rational
-  }
-
-type instance PlyArgOf PProtocolConfig = ProtocolConfig
