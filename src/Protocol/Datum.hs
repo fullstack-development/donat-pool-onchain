@@ -16,14 +16,14 @@ data PProtocolDatum (s :: S)
                , "maxAmount" ':= PInteger
                , "minDuration" ':= PInteger
                , "maxDuration" ':= PInteger
-               , "protocolFee" ':= PRational
+               , "protocolFee" ':= PInteger
                , "managerPkh" ':= PPubKeyHash
                , "tokenOriginRef" ':= PTxOutRef
                ]
           )
       )
   deriving stock (GHC.Generic)
-  deriving anyclass (PlutusType, PIsData, PDataFields, PShow, PEq)
+  deriving anyclass (PlutusType, PIsData, PDataFields, PEq)
 
 instance DerivePlutusType PProtocolDatum where
   type DPTStrat _ = PlutusTypeData

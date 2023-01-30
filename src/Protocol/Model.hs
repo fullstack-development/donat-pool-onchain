@@ -20,7 +20,7 @@ data PProtocol (s :: S)
           )
       )
   deriving stock (GHC.Generic)
-  deriving anyclass (PlutusType, PIsData, PDataFields, PShow, Typeable)
+  deriving anyclass (PlutusType, PIsData, PDataFields)
 
 instance DerivePlutusType PProtocol where
   type DPTStrat _ = PlutusTypeData
@@ -55,7 +55,7 @@ data PProtocolConfig (s :: S)
           )
       )
   deriving stock (GHC.Generic)
-  deriving anyclass (PlutusType, PIsData, PDataFields, PShow, Typeable)
+  deriving anyclass (PlutusType, PIsData, PDataFields)
 
 instance DerivePlutusType PProtocolConfig where
   type DPTStrat _ = PlutusTypeData

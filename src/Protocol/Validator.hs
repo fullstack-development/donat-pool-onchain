@@ -48,7 +48,7 @@ checkSignedByManager protocol ctx' = do
   let signatories = pfield @"signatories" # txInfo
   let managerPkh = pfield @"managerPkh" # protocol
   let present = pelem # pdata managerPkh # pfromData signatories
-  pguardC "Wrong pkh" $ pelem # pdata managerPkh # pfromData signatories
+  pguardC "111" $ pelem # pdata managerPkh # pfromData signatories
 
 checkUpdateProtocolOutput :: Term s PProtocol -> Term s PProtocolDatum -> Term s PScriptContext -> TermCont s ()
 checkUpdateProtocolOutput protocol inDatum  ctx = do
@@ -61,18 +61,18 @@ checkUpdateProtocolDatum :: Term s PProtocolDatum ->Term s PScriptContext -> Ter
 checkUpdateProtocolDatum inDatum ctx txOut = do
   outDatum' <- inlineDatumFromOutput ctx txOut
   (outDatum, _) <- ptryFromC @PProtocolDatum outDatum'
-  pguardC "protocol managerPkh shouldn't be changed" (pfield @"managerPkh" # inDatum #== pfield @"managerPkh" # outDatum)
-  pguardC "protocol tokenOriginRef shouldn't be changed" (pfield @"tokenOriginRef" # inDatum #== pfield @"tokenOriginRef" # outDatum)
-  pguardC "protocol config must change" (pnot #$ inDatum #== outDatum)
+  pguardC "112" (pfield @"managerPkh" # inDatum #== pfield @"managerPkh" # outDatum)
+  pguardC "113" (pfield @"tokenOriginRef" # inDatum #== pfield @"tokenOriginRef" # outDatum)
+  pguardC "114" (pnot #$ inDatum #== outDatum)
   pure ()
 
 checkUpdateProtocolValue :: Term s PProtocol -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkUpdateProtocolValue protocol ctx txOut = do
   inValue <- getOwnInputValue ctx
   let outValue = getOwnOutputValueFromTxOut txOut
-  pguardC "protocol value shouldn't be changed" (inValue #== outValue)
+  pguardC "115" (inValue #== outValue)
   let threadTokenAmount = pvalueOf # outValue # protocolSymbol protocol # protocolToken protocol
-  pguardC "protocol thread token isn't in value" (threadTokenAmount #== 1)
+  pguardC "116" (threadTokenAmount #== 1)
   pure ()
 
 checkNftBurned :: Term s PProtocol -> Term s (PAsData PTxInfo) -> TermCont s ()
