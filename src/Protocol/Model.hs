@@ -50,7 +50,7 @@ data PProtocolConfig (s :: S)
                , "maxAmount" ':= PInteger
                , "minDuration" ':= PInteger
                , "maxDuration" ':= PInteger
-               , "protocolFee" ':= PRational
+               , "protocolFee" ':= PInteger
                ]
           )
       )
