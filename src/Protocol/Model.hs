@@ -20,7 +20,7 @@ data PProtocol (s :: S)
           )
       )
   deriving stock (GHC.Generic)
-  deriving anyclass (PlutusType, PIsData, PDataFields, PShow, Typeable)
+  deriving anyclass (PlutusType, PIsData, PDataFields)
 
 instance DerivePlutusType PProtocol where
   type DPTStrat _ = PlutusTypeData
@@ -40,3 +40,26 @@ data Protocol = Protocol
   }
 
 type instance PlyArgOf PProtocol = Protocol
+
+data PProtocolConfig (s :: S)
+  = PProtocolConfig
+      ( Term
+          s
+          ( PDataRecord
+              '[ "minAmount" ':= PInteger
+               , "maxAmount" ':= PInteger
+               , "minDuration" ':= PInteger
+               , "maxDuration" ':= PInteger
+               , "protocolFee" ':= PInteger
+               ]
+          )
+      )
+  deriving stock (GHC.Generic)
+  deriving anyclass (PlutusType, PIsData, PDataFields)
+
+instance DerivePlutusType PProtocolConfig where
+  type DPTStrat _ = PlutusTypeData
+
+instance PTryFrom PData PProtocolConfig
+
+instance PTryFrom PData (PAsData PProtocolConfig)

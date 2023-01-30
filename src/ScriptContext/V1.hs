@@ -35,7 +35,7 @@ getOwnOutputDatumFromTxOut ctx txOut = do
   datum <- datumFromOutput ctx txOut
   pmatchC datum >>= \case
     PJust d -> pure d
-    PNothing -> pure $ ptraceError "can't get datum by datum hash"
+    PNothing -> pure $ ptraceError "211"
 
 datumFromOutput :: Term s PScriptContext -> Term s PTxOut -> TermCont s (Term s (PMaybe (PAsData PProtocolDatum)))
 datumFromOutput ctx scriptTxOut = do
@@ -45,7 +45,7 @@ datumFromOutput ctx scriptTxOut = do
       txInfo' <- getCtxInfoForSpending ctx
       let d = pparseDatum @PProtocolDatum # datumHash #$ pfield @"datums" # txInfo'
       pure d
-    PDNothing _ -> pure $ ptraceError "no datum hash in script output"
+    PDNothing _ -> pure $ ptraceError "212"
 
 getOnlyOneOwnOutput :: Term s PScriptContext -> TermCont s (Term s PTxOut)
 getOnlyOneOwnOutput ctx = findOwnOutputs ctx >>= getOnlyOneOutputFromList
@@ -59,7 +59,7 @@ findOwnOutputs ctx' = do
           inputs = pfield @"inputs" # getField @"txInfo" ctx
           outputs = pfield @"outputs" # getField @"txInfo" ctx
       pure $ pgetContinuingOutputs # inputs # outputs # outRef
-    _ -> pure $ ptraceError "not a spending tx"
+    _ -> pure $ ptraceError "213"
 
 findOwnInput :: Term s PScriptContext -> TermCont s (Term s (PMaybe PTxInInfo))
 findOwnInput ctx' = do
@@ -70,12 +70,12 @@ findOwnInput ctx' = do
           inputs = pfield @"inputs" # getField @"txInfo" ctx
       pure $ pfindOwnInput # inputs # outRef
     _ ->
-      pure $ ptraceError "not a spending tx"
+      pure $ ptraceError "214"
 
 getOwnInputOrTraceError :: Term s PScriptContext -> TermCont s (Term s PTxOut)
 getOwnInputOrTraceError ctx = do
   mbTxInInfo <- findOwnInput ctx
-  let txInInfo = pfromMaybe # ptraceError "not a spending tx" # mbTxInInfo
+  let txInInfo = pfromMaybe # ptraceError "215" # mbTxInInfo
   pure $ pfield @"resolved" # txInInfo
 
 getOwnInputValue :: Term s PScriptContext -> TermCont s (Term s SortedPositiveValue)
@@ -95,7 +95,7 @@ checkNftBurnt :: Term s PCurrencySymbol -> Term s PTokenName -> Term s (PAsData 
 checkNftBurnt currency tokenName txInfo = do
   let mintValue = pfield @"mint" # txInfo
   let mintingTokenAmount = pvalueOf # mintValue # currency # tokenName
-  pguardC "should burn 1 thread token" $ mintingTokenAmount #== -1
+  pguardC "216" $ mintingTokenAmount #== -1
   pure ()
 
 pubKeyOutputsAt :: Term s PPubKeyHash -> Term s (PAsData PTxInfo) -> TermCont s (Term s PTxOut)
@@ -118,21 +118,21 @@ checkPkhReceiveScriptValue pkh expectedValue txOut = do
   pkhOutput <- pubKeyOutputsAt pkh txOut
   let pkhOutputValue = getOwnOutputValueFromTxOut pkhOutput
   let minAdaAmount = pvalueOf # pkhOutputValue # padaSymbol # padaToken
-  pguardC "should be minAda in pkh output" $ minAdaAmount #== expectedValue
+  pguardC "217" $ minAdaAmount #== expectedValue
   pure ()
 
 getOnlyOneOutputFromList :: Term s (PBuiltinList PTxOut) -> TermCont s (Term s PTxOut)
 getOnlyOneOutputFromList outputs = do
   pmatchC outputs >>= \case
-    PNil -> pure $ ptraceError "no outputs found in context, expected 1"
+    PNil -> pure $ ptraceError "218"
     PCons scriptTxOut rest -> do
       pmatchC rest >>= \case
         PNil -> pure scriptTxOut
-        _ -> pure $ ptraceError "many outputs found in context, expected 1"
+        _ -> pure $ ptraceError "219"
 
 checkNoOutputs :: Term s PScriptContext -> TermCont s (Term s PUnit)
 checkNoOutputs ctx = do
   outputs <- findOwnOutputs ctx
   pmatchC outputs >>= \case
     PNil -> pure $ pconstant ()
-    PCons _ _ -> pure $ ptraceError "1 or more outputs found in context, expected 0"
+    PCons _ _ -> pure $ ptraceError "220"

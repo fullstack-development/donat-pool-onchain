@@ -33,16 +33,13 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
   (red, _) <- ptryFrom @PProtocolRedeemer redm
   pmatch red $ \case
     PUpdateProtocolConfig redData -> popaque . unTermCont $ do
-      let newConf = pfield @"_0" # redData
       checkSignedByManager protocol ctx
-      checkConfigChanged dat newConf
-      checkUpdateProtocolOutput protocol dat newConf ctx
+      checkUpdateProtocolOutput protocol dat ctx
       pure $ pconstant ()
     PCloseProtocol _ -> popaque . unTermCont $ do
       txInfo <- getCtxInfoForSpending ctx
       checkNoOutputs ctx
       checkNftBurned protocol txInfo
-      checkManagerReceiveMinAda protocol txInfo
       pure $ pconstant ()
 
 checkSignedByManager :: Term s PProtocol -> Term s PScriptContext -> TermCont s ()
@@ -51,40 +48,32 @@ checkSignedByManager protocol ctx' = do
   let signatories = pfield @"signatories" # txInfo
   let managerPkh = pfield @"managerPkh" # protocol
   let present = pelem # pdata managerPkh # pfromData signatories
-  pguardC "Wrong pkh" $ pelem # pdata managerPkh # pfromData signatories
+  pguardC "111" $ pelem # pdata managerPkh # pfromData signatories
 
-checkConfigChanged :: Term s PProtocolDatum -> Term s PProtocolConfig -> TermCont s ()
-checkConfigChanged datm newConf = P.do
-  let oldConfig = pfield @"protocolConfig" # datm
-  pguardC "132" (pnot #$ oldConfig #== newConf)
-
-checkUpdateProtocolOutput :: Term s PProtocol -> Term s PProtocolDatum -> Term s PProtocolConfig -> Term s PScriptContext -> TermCont s ()
-checkUpdateProtocolOutput protocol inDatum newConf ctx = do
+checkUpdateProtocolOutput :: Term s PProtocol -> Term s PProtocolDatum -> Term s PScriptContext -> TermCont s ()
+checkUpdateProtocolOutput protocol inDatum  ctx = do
   output <- getOnlyOneOwnOutput ctx
-  checkUpdateProtocolDatum inDatum newConf ctx output
+  checkUpdateProtocolDatum inDatum ctx output
   checkUpdateProtocolValue protocol ctx output
   pure ()
 
-checkUpdateProtocolDatum :: Term s PProtocolDatum -> Term s PProtocolConfig -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
-checkUpdateProtocolDatum inDatum newConf ctx txOut = do
+checkUpdateProtocolDatum :: Term s PProtocolDatum ->Term s PScriptContext -> Term s PTxOut -> TermCont s ()
+checkUpdateProtocolDatum inDatum ctx txOut = do
   outDatum' <- inlineDatumFromOutput ctx txOut
   (outDatum, _) <- ptryFromC @PProtocolDatum outDatum'
-  pguardC "protocol constants shouldn't be changed" (pfield @"protocolConstants" # inDatum #== pfield @"protocolConstants" # outDatum)
-  pguardC "protocol config changed unexpectedly" (pfield @"protocolConfig" # outDatum #== newConf)
+  pguardC "112" (pfield @"managerPkh" # inDatum #== pfield @"managerPkh" # outDatum)
+  pguardC "113" (pfield @"tokenOriginRef" # inDatum #== pfield @"tokenOriginRef" # outDatum)
+  pguardC "114" (pnot #$ inDatum #== outDatum)
   pure ()
 
 checkUpdateProtocolValue :: Term s PProtocol -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkUpdateProtocolValue protocol ctx txOut = do
   inValue <- getOwnInputValue ctx
   let outValue = getOwnOutputValueFromTxOut txOut
-  pguardC "protocol value shouldn't be changed" (inValue #== outValue)
+  pguardC "115" (inValue #== outValue)
   let threadTokenAmount = pvalueOf # outValue # protocolSymbol protocol # protocolToken protocol
-  pguardC "protocol thread token isn't in value" (threadTokenAmount #== 1)
+  pguardC "116" (threadTokenAmount #== 1)
   pure ()
 
 checkNftBurned :: Term s PProtocol -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkNftBurned protocol = checkNftBurnt (protocolSymbol protocol) (protocolToken protocol)
-
--- TODO: Need to be tested (txout may also contain the charge)
-checkManagerReceiveMinAda :: Term s PProtocol -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkManagerReceiveMinAda protocol = checkPkhReceiveScriptValue (pfield @"managerPkh" # protocol) minTxOut
