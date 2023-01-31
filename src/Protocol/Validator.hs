@@ -17,7 +17,8 @@ import qualified PlutusCore as PLC
 import Protocol.Datum
 import Protocol.Model
 import Protocol.Redeemer
-import ScriptContext.V2
+import Shared.Checks
+import Shared.ScriptContextV2
 
 -- TODO: Add config values validation for updateProtocol
 -- validate config values:
@@ -37,29 +38,29 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
       checkUpdateProtocolOutput protocol dat ctx
       pure $ pconstant ()
     PCloseProtocol _ -> popaque . unTermCont $ do
-      txInfo <- getCtxInfoForSpending ctx
+      let txInfo = getCtxInfoForSpending # ctx
       checkNoOutputs ctx
       checkNftBurned protocol txInfo
       pure $ pconstant ()
 
 checkSignedByManager :: Term s PProtocol -> Term s PScriptContext -> TermCont s ()
 checkSignedByManager protocol ctx' = do
-  txInfo <- getCtxInfoForSpending ctx'
+  let txInfo = getCtxInfoForSpending # ctx'
   let signatories = pfield @"signatories" # txInfo
   let managerPkh = pfield @"managerPkh" # protocol
   let present = pelem # pdata managerPkh # pfromData signatories
   pguardC "111" $ pelem # pdata managerPkh # pfromData signatories
 
 checkUpdateProtocolOutput :: Term s PProtocol -> Term s PProtocolDatum -> Term s PScriptContext -> TermCont s ()
-checkUpdateProtocolOutput protocol inDatum  ctx = do
-  output <- getOnlyOneOwnOutput ctx
+checkUpdateProtocolOutput protocol inDatum ctx = do
+  let output = getOnlyOneOwnOutput # ctx
   checkUpdateProtocolDatum inDatum ctx output
   checkUpdateProtocolValue protocol ctx output
   pure ()
 
-checkUpdateProtocolDatum :: Term s PProtocolDatum ->Term s PScriptContext -> Term s PTxOut -> TermCont s ()
+checkUpdateProtocolDatum :: Term s PProtocolDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkUpdateProtocolDatum inDatum ctx txOut = do
-  outDatum' <- inlineDatumFromOutput ctx txOut
+  let outDatum' = inlineDatumFromOutput # ctx # txOut
   (outDatum, _) <- ptryFromC @PProtocolDatum outDatum'
   pguardC "112" (pfield @"managerPkh" # inDatum #== pfield @"managerPkh" # outDatum)
   pguardC "113" (pfield @"tokenOriginRef" # inDatum #== pfield @"tokenOriginRef" # outDatum)
@@ -68,8 +69,8 @@ checkUpdateProtocolDatum inDatum ctx txOut = do
 
 checkUpdateProtocolValue :: Term s PProtocol -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkUpdateProtocolValue protocol ctx txOut = do
-  inValue <- getOwnInputValue ctx
-  let outValue = getOwnOutputValueFromTxOut txOut
+  let inValue = getOwnInputValue # ctx
+  let outValue = pfield @"value" # txOut
   pguardC "115" (inValue #== outValue)
   let threadTokenAmount = pvalueOf # outValue # protocolSymbol protocol # protocolToken protocol
   pguardC "116" (threadTokenAmount #== 1)

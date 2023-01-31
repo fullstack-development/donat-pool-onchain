@@ -97,7 +97,8 @@ library
     Protocol.Model
     Protocol.Redeemer
     Protocol.Validator
-    ScriptContext.V2
+    Shared.Checks
+    Shared.ScriptContextV2
     Validator.AlwaysSucceeds
     Validator.TestValidator
 
