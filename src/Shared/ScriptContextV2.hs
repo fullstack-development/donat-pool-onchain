@@ -38,8 +38,8 @@ getCtxInfoForSpending = phoistAcyclic $
       PSpending _ -> pfield @"txInfo" # ctx'
       _ -> ptraceError "303"
 
-getOrefInfoForSpending :: Term s (PScriptContext :--> PTxOutRef)
-getOrefInfoForSpending = phoistAcyclic $
+getOrefForSpending :: Term s (PScriptContext :--> PTxOutRef)
+getOrefForSpending = phoistAcyclic $
   plam $ \ctx' ->
     pmatch (pfield @"purpose" #ctx') $ \case
       PSpending outRef -> pfield @"_0" # outRef
@@ -54,7 +54,7 @@ getOnlyOneOwnOutput = phoistAcyclic $
 findOwnOutputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
 findOwnOutputs = phoistAcyclic $
   plam $ \ctx' ->
-    let outRef = getOrefInfoForSpending # ctx'
+    let outRef = getOrefForSpending # ctx'
         txInfo = pfield @"txInfo" # ctx'
         inputs = pfield @"inputs" # txInfo
         outputs = pfield @"outputs" # txInfo
@@ -63,7 +63,7 @@ findOwnOutputs = phoistAcyclic $
 findOwnInput :: Term s (PScriptContext :--> PMaybe PTxInInfo)
 findOwnInput = phoistAcyclic $
   plam $ \ctx' ->
-    let outRef = getOrefInfoForSpending # ctx'
+    let outRef = getOrefForSpending # ctx'
         txInfo = pfield @"txInfo" # ctx'
         inputs = pfield @"inputs" # txInfo
      in pfindOwnInput # inputs # outRef
