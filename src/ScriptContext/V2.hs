@@ -68,7 +68,7 @@ findOwnInput ctx' = do
 getOwnInputOrTraceError :: Term s PScriptContext -> TermCont s (Term s PTxOut)
 getOwnInputOrTraceError ctx = do
   mbTxInInfo <- findOwnInput ctx
-  let txInInfo = pfromMaybe # ptraceError "305" # mbTxInInfo
+  let txInInfo = ptraceIfNothing "305" mbTxInInfo
   pure $ pfield @"resolved" # txInInfo
 
 getOwnInputValue :: Term s PScriptContext -> TermCont s (Term s SortedPositiveValue)
