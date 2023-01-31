@@ -129,3 +129,12 @@ checkNoOutputs ctx = do
   pmatchC outputs >>= \case
     PNil -> pure $ pconstant ()
     PCons _ _ -> pure $ ptraceError "310"
+
+checkMintingAmount :: Term s PInteger -> Term s PTokenName -> Term s PScriptContext -> TermCont s ()
+checkMintingAmount amt tn ctx' = do 
+    ctx <- tcont $ pletFields @'["txInfo", "purpose"] ctx'
+    PMinting mintFlds <- tcont . pmatch $ getField @"purpose" ctx
+    let ownSym = pfield @"_0" # mintFlds
+    txInfo <- tcont $ pletFields @'["mint"] $ getField @"txInfo" ctx
+    pguardC "Wrong NFT mint amount" $
+      pvalueOf # getField @"mint" txInfo # ownSym # tn #== amt
