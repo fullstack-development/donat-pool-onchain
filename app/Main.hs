@@ -6,12 +6,13 @@ import Plutarch
 import Ply.Plutarch
 
 import Ext.Ply.Plutarch.TypedWriter
+import Fundraising.Validator (fundraisingValidator)
 import MintingPolicy.NFT (nftPolicy)
 import MintingPolicy.VerToken (verTokenPolicy)
 import Protocol.Validator
 import Validator.AlwaysSucceeds (alwaysSucceedsValidator)
 
--- Compiles scripts and put them to files in the "compiled"s folder
+-- Compiles scripts and put them to files in the "compiled" folder
 main :: IO ()
 main = do
   writeTypedScriptTraced
@@ -30,3 +31,7 @@ main = do
     "Verification token"
     "verTokenPolicy.plutus"
     verTokenPolicy
+  writeTypedScriptTraced
+    "Fundraising validator"
+    "fundraisingValidator.plutus"
+    fundraisingValidator
