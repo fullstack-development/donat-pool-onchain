@@ -7,9 +7,9 @@ import Ply.Plutarch
 
 import Ext.Ply.Plutarch.TypedWriter
 import MintingPolicy.NFT (nftPolicy)
+import MintingPolicy.VerToken (verTokenPolicy)
 import Protocol.Validator
 import Validator.AlwaysSucceeds (alwaysSucceedsValidator)
-import Validator.TestValidator (testValidator)
 
 -- Compiles scripts and put them to files in the "compiled"s folder
 main :: IO ()
@@ -27,6 +27,6 @@ main = do
     "protocolValidator.plutus"
     protocolValidator
   writeTypedScriptTraced
-    "Test Validator"
-    "testValidator.plutus"
-    testValidator
+    "Verification token"
+    "verTokenPolicy.plutus"
+    verTokenPolicy

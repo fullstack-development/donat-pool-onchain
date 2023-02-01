@@ -9,7 +9,7 @@ import Plutarch.Prelude hiding (Generic)
 import Plutarch.DataRepr
 import Plutarch.Builtin
 import qualified Plutarch.Monadic as P
-import ScriptContext.V2 (checkMintingAmount)
+import Shared.Checks (checkMintingAmount)
 
 data PNftRedeemer (s :: S) 
   = PMintNft (Term s (PDataRecord '["_0" ':= PTokenName])) 
