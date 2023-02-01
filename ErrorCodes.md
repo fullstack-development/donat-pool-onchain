@@ -10,6 +10,9 @@
 201: 1 or more outputs found in context, expected 0
 202: should burn 1 thread token
 203: should be minAda in pkh output
+204: Wrong NFT mint amount
+205: NFT missed in transaction inputs
+206: NFT missed in transaction outputs
 
 ## Shared.ScriptContextV2
 301: no datum in script output

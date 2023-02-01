@@ -11,6 +11,7 @@ import Plutarch.Builtin
 import Plutarch.DataRepr
 import Plutarch.Extra.Maybe
 import Plutarch.Extra.TermCont
+import qualified Plutarch.List as List
 import qualified Plutarch.Monadic as P
 import Plutarch.Prelude
 import PlutusCore (Closed)
@@ -41,3 +42,34 @@ checkPkhReceiveScriptValue pkh expectedValue txOut = do
       minAdaAmount = pvalueOf # pkhOutputValue # padaSymbol # padaToken
   pguardC "203" $ minAdaAmount #== expectedValue
   pure ()
+
+checkMintingAmount :: Term s PInteger -> Term s PTokenName -> Term s PScriptContext -> TermCont s ()
+checkMintingAmount amt tn ctx' = do 
+    ctx <- tcont $ pletFields @'["txInfo", "purpose"] ctx'
+    PMinting mintFlds <- tcont . pmatch $ getField @"purpose" ctx
+    let ownSym = pfield @"_0" # mintFlds
+    txInfo <- tcont $ pletFields @'["mint"] $ getField @"txInfo" ctx
+    pguardC "204" $
+      pvalueOf # getField @"mint" txInfo # ownSym # tn #== amt
+
+checkNftIsInTxInput :: Term s PCurrencySymbol -> Term s PTokenName -> Term s PScriptContext -> TermCont s ()
+checkNftIsInTxInput cs tn ctx = do
+  let inputs = getAllTxInputs # ctx
+  checkNftIsInTxOutList "205" cs tn inputs
+  pure ()
+
+checkNftIsInTxOutput :: Term s PCurrencySymbol -> Term s PTokenName -> Term s PScriptContext -> TermCont s ()
+checkNftIsInTxOutput cs tn ctx = do
+  let outputs = getAllTxOutputs # ctx
+  checkNftIsInTxOutList "206" cs tn outputs
+  pure ()
+      
+checkNftIsInTxOutList :: Term s PString -> Term s PCurrencySymbol -> Term s PTokenName -> Term s (PBuiltinList PTxOut) -> TermCont s ()
+checkNftIsInTxOutList errMsg cs tn txOuts = do 
+  pguardC errMsg $ 
+      List.pany 
+        # plam (\out ->
+            let inputValue = pfield @"value" # out 
+             in pvalueOf # inputValue # cs # tn #== 1
+          ) 
+        # txOuts

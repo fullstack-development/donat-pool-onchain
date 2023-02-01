@@ -11,6 +11,7 @@ import Plutarch.Builtin
 import Plutarch.DataRepr
 import Plutarch.Extra.Maybe
 import Plutarch.Extra.TermCont
+import qualified Plutarch.List as List 
 import qualified Plutarch.Monadic as P
 import Plutarch.Prelude
 import PlutusCore (Closed)
@@ -106,3 +107,18 @@ getOnlyOneOutputFromList = phoistAcyclic $
         pmatch rest $ \case
           PNil -> scriptTxOut
           _ -> ptraceError "307"
+
+getAllTxInputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
+getAllTxInputs = phoistAcyclic $
+  plam $ \ctx -> 
+    let 
+      txInfo = pfield @"txInfo" # ctx
+      inputs = pfield @"inputs" # txInfo
+    in List.pmap # (plam (\txIn -> pfield @"resolved" # txIn)) # inputs
+
+getAllTxOutputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
+getAllTxOutputs = phoistAcyclic $
+  plam $ \ctx ->
+    let 
+      txInfo = pfield @"txInfo" # ctx
+     in pfield @"outputs" # txInfo
