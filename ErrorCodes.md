@@ -13,6 +13,7 @@
 204: Wrong NFT mint amount
 205: NFT missed in transaction inputs
 206: NFT missed in transaction outputs
+207: Invalid tx time range
 
 ## Shared.ScriptContextV2
 301: no datum in script output
@@ -22,3 +23,13 @@
 305: no own inputs
 306: no outputs found in context, expected 1
 307: many outputs found in context, expected 1
+
+## Fundraising.Validator
+401: Fundraising datum change not expected while Donating
+402: Unexpected output value while Donating
+403: Amount to donate must be greater than minAda amount
+404: Funds have been fully raised already
+405: Verification token missed in fundraising script input (donating)
+406: Verification token missed in fundraising script output (donating)
+407: Thread token missed in fundraising script input (donating)
+408: Thread token missed in fundraising script output (donating)

@@ -8,7 +8,7 @@ import Plutarch.Prelude
 -- Note:
 -- _0 - Fundraising ThreadToken CurrencySymbol
 -- _1 - Fundraising ThreadToken Token name
--- _2 - amount ot donate - must be greater than minAda
+-- _2 - amount ot donate in Ada - must be greater than minAda
 data PFundraisingRedeemer (s :: S)
   = PDonate (Term s (PDataRecord '[ "_0" ':= PCurrencySymbol, "_1" ':= PTokenName, "_2" ':= PInteger ]))
   | PReceiveFunds (Term s (PDataRecord '[ "_0" ':= PCurrencySymbol, "_1" ':= PTokenName ]))
