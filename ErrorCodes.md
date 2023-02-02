@@ -33,3 +33,7 @@
 406: Verification token missed in fundraising script output (donating)
 407: Thread token missed in fundraising script input (donating)
 408: Thread token missed in fundraising script output (donating)
+409: Verification token missed in fundraising script input (receivingFunds)
+410: Thread token missed in fundraising script input (receivingFunds)
+411: ReceiveFunds transaction not signed by transaction creator
+412: Impossible to receive funds as fundraising is not completed

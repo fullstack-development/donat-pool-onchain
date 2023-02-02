@@ -80,7 +80,13 @@ checkNftIsInValue errMsg cs tn val = do
   let nftAmt = pvalueOf # val # cs # tn
   pguardC errMsg (nftAmt #== 1)
 
-checkValidTimeRange :: Term s PPOSIXTimeRange -> Term s PTxInfo -> TermCont s ()
+checkValidTimeRange :: Term s PPOSIXTimeRange -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkValidTimeRange validTimeRange txInfo = do 
   let txTimeRange = pfield @"validRange" # txInfo
   pguardC "207" (pcontains # validTimeRange # txTimeRange)
+
+checkIsSignedBy :: Term s PString -> Term s PPubKeyHash -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkIsSignedBy errMsg pkh txInfo = do
+  let 
+    signatories = pfield @"signatories" # txInfo
+  pguardC errMsg $ pelem # pdata pkh # pfromData signatories

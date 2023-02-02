@@ -5,12 +5,14 @@ import Ext.Plutus.MinAda
 import Generics.SOP
 import Plutarch.Api.V1.Value
 import Plutarch.Api.V2
+import Plutarch.Bool (por')
 import Plutarch.Builtin
 import Plutarch.DataRepr
 import Plutarch.Extra.Interval
 import Plutarch.Extra.TermCont
 import qualified Plutarch.Monadic as P
-import Plutarch.Num ((#+))
+import qualified Plutarch.Rational as Rational
+import Plutarch.Num ((#+), (#*), (#-))
 import Plutarch.Prelude hiding (pto)
 import PlutusCore (Closed)
 import qualified PlutusCore as PLC
@@ -33,9 +35,11 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
     verTokenName = pfield @"verTokenName" # fundraising
     output = getOnlyOneOwnOutput # ctx
     inputValue = getOwnInputValue # ctx
+    inputAda = plovelaceValueOf # inputValue
     outputValue = pfield @"value" # output
-    txInfo = pfield @"txInfo" # ctx
+    txInfo = getCtxInfoForSpending # ctx
     deadline = pfield @"frDeadline" # dat
+    desiredFunds = pfield @"frAmount" # dat
   pmatch red $ \case
     PDonate redData -> popaque $ unTermCont $ do
       let 
@@ -44,21 +48,33 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
         threadTokenName = pfield @"_1" # redData
         validInterval = pto # deadline
       checkDonateDatum dat ctx output
-      checkDonateAdaValue dat inputValue outputValue amountToDonate
+      checkDonateAdaValue desiredFunds inputAda outputValue amountToDonate
       checkNftIsInValue "405" verTokenCS verTokenName inputValue
       checkNftIsInValue "406" verTokenCS verTokenName outputValue
       checkNftIsInValue "407" threadTokenCS threadTokenName inputValue
       checkNftIsInValue "408" threadTokenCS threadTokenName outputValue
       checkValidTimeRange validInterval txInfo
       pure $ pconstant ()
-    PReceiveFunds redData ->
-      -- check fundraising time range is over OR the funds are fully raised
-      -- check input contains threadToken and verToken
-      -- check no own output
-      -- check verToken and threadToken burned
-      -- check the funds were transferred to user (??)
-      -- check fees were transferred to protocol manager (?? or to protocol script - try transaction with 2 script redeemers)
-      popaque $ pconstant ()
+    PReceiveFunds redData -> popaque $ unTermCont $ do
+      let 
+        threadTokenCS = pfield @"_0" # redData
+        threadTokenName = pfield @"_1" # redData
+        creatorPkh = pfield @"creatorPkh" # dat
+        fees = pfield @"frFee" # dat
+        raisedFunds = inputAda #- minTxOut
+        feePayment = calculateFees # fees # raisedFunds
+        protocol = pfield @"protocol" # fundraising
+        managerPkh = pfield @"managerPkh" # protocol
+        validInterval = pfrom # deadline
+      checkNftIsInValue "409" verTokenCS verTokenName inputValue
+      checkNftIsInValue "410" threadTokenCS threadTokenName inputValue
+      checkNoOutputs ctx
+      checkNftBurnt verTokenCS verTokenName txInfo
+      checkNftBurnt threadTokenCS threadTokenName txInfo
+      checkIsSignedBy "411" creatorPkh txInfo
+      checkPkhReceiveScriptValue managerPkh feePayment txInfo
+      checkFundraisingCompleted validInterval raisedFunds desiredFunds txInfo
+      pure $ pconstant ()
 
 checkDonateDatum :: Term s PFundraisingDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkDonateDatum inputDatum ctx output = do
@@ -69,17 +85,37 @@ checkDonateDatum inputDatum ctx output = do
   pure ()
 
 checkDonateAdaValue :: 
-  Term s PFundraisingDatum -> 
-  Term s SortedPositiveValue -> 
+  Term s PInteger -> 
+  Term s PInteger -> 
   Term s SortedPositiveValue -> 
   Term s PInteger -> 
   TermCont s ()
-checkDonateAdaValue inputDatum inputValue outputValue amt = do 
+checkDonateAdaValue maxAmount inputAda outputValue amt = do 
   let 
-    inputAda = plovelaceValueOf # inputValue
     outputAda = plovelaceValueOf # outputValue
-    maxAmount = pfield @"frAmount" # inputDatum 
   pguardC "402" (outputAda #== (inputAda #+ amt))
   pguardC "403" (minTxOut #<= amt)
   pguardC "404" (inputAda #< maxAmount)
   pure ()
+
+calculateFees :: Term s (PInteger :--> PInteger :--> PInteger)
+calculateFees = phoistAcyclic $
+  plam $ \fee' funds' -> 
+    let 
+      fee = (Rational.pfromInteger # fee') Rational.#/ (Rational.pfromInteger # 100)
+      funds = Rational.pfromInteger # funds'
+      res = fee #* funds
+    in pmax # (pround # res) # minTxOut
+
+checkFundraisingCompleted :: 
+  Term s PPOSIXTimeRange -> 
+  Term s PInteger -> 
+  Term s PInteger -> 
+  Term s (PAsData PTxInfo) -> 
+  TermCont s ()
+checkFundraisingCompleted afterDeadlineRange raisedFunds desiredFunds txInfo = do 
+  let 
+    txRange = pfield @"validRange" # txInfo
+    timeClause = pcontains # afterDeadlineRange # txRange
+    fundsClause = desiredFunds #<= raisedFunds
+  pguardC "412" (por' # timeClause # fundsClause)
