@@ -9,6 +9,7 @@ import Plutarch.Api.V1.Value
 import Plutarch.Api.V2
 import Plutarch.Builtin
 import Plutarch.DataRepr
+import Plutarch.Extra.Interval
 import Plutarch.Extra.Maybe
 import Plutarch.Extra.TermCont
 import qualified Plutarch.List as List
@@ -73,3 +74,19 @@ checkNftIsInTxOutList errMsg cs tn txOuts = do
              in pvalueOf # inputValue # cs # tn #== 1
           ) 
         # txOuts
+
+checkNftIsInValue :: Term s PString -> Term s PCurrencySymbol -> Term s PTokenName -> Term s SortedPositiveValue -> TermCont s ()
+checkNftIsInValue errMsg cs tn val = do
+  let nftAmt = pvalueOf # val # cs # tn
+  pguardC errMsg (nftAmt #== 1)
+
+checkValidTimeRange :: Term s PPOSIXTimeRange -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkValidTimeRange validTimeRange txInfo = do 
+  let txTimeRange = pfield @"validRange" # txInfo
+  pguardC "207" (pcontains # validTimeRange # txTimeRange)
+
+checkIsSignedBy :: Term s PString -> Term s PPubKeyHash -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkIsSignedBy errMsg pkh txInfo = do
+  let 
+    signatories = pfield @"signatories" # txInfo
+  pguardC errMsg $ pelem # pdata pkh # pfromData signatories

@@ -46,10 +46,8 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
 checkSignedByManager :: Term s PProtocol -> Term s PScriptContext -> TermCont s ()
 checkSignedByManager protocol ctx' = do
   let txInfo = getCtxInfoForSpending # ctx'
-  let signatories = pfield @"signatories" # txInfo
   let managerPkh = pfield @"managerPkh" # protocol
-  let present = pelem # pdata managerPkh # pfromData signatories
-  pguardC "111" $ pelem # pdata managerPkh # pfromData signatories
+  checkIsSignedBy "111" managerPkh txInfo
 
 checkUpdateProtocolOutput :: Term s PProtocol -> Term s PProtocolDatum -> Term s PScriptContext -> TermCont s ()
 checkUpdateProtocolOutput protocol inDatum ctx = do

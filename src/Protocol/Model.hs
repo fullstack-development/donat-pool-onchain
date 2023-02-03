@@ -25,6 +25,7 @@ data PProtocol (s :: S)
 instance DerivePlutusType PProtocol where
   type DPTStrat _ = PlutusTypeData
 
+instance PTryFrom PData PProtocol
 instance PTryFrom PData (PAsData PProtocol)
 
 protocolSymbol :: Term s PProtocol -> Term s PCurrencySymbol
