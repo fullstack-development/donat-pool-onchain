@@ -29,11 +29,17 @@ checkNoOutputs ctx = do
     PNil -> pure $ pconstant ()
     PCons _ _ -> pure $ ptraceError "201"
 
-checkNftBurnt :: Term s PCurrencySymbol -> Term s PTokenName -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkNftBurnt currency tokenName txInfo = do
+checkNftMinted ::
+  Term s PString ->
+  Term s PInteger ->
+  Term s PCurrencySymbol ->
+  Term s PTokenName ->
+  Term s (PAsData PTxInfo) ->
+  TermCont s ()
+checkNftMinted errMsg amount currency tokenName txInfo = do
   let mintValue = pfield @"mint" # txInfo
       mintingTokenAmount = pvalueOf # mintValue # currency # tokenName
-  pguardC "202" $ mintingTokenAmount #== -1
+  pguardC errMsg $ mintingTokenAmount #== amount
   pure ()
 
 checkPkhReceiveScriptValue :: Term s PPubKeyHash -> Term s PInteger -> Term s (PAsData PTxInfo) -> TermCont s ()
@@ -45,13 +51,13 @@ checkPkhReceiveScriptValue pkh expectedValue txOut = do
   pure ()
 
 checkMintingAmount :: Term s PInteger -> Term s PTokenName -> Term s PScriptContext -> TermCont s ()
-checkMintingAmount amt tn ctx' = do 
-    ctx <- tcont $ pletFields @'["txInfo", "purpose"] ctx'
-    PMinting mintFlds <- tcont . pmatch $ getField @"purpose" ctx
-    let ownSym = pfield @"_0" # mintFlds
-    txInfo <- tcont $ pletFields @'["mint"] $ getField @"txInfo" ctx
-    pguardC "204" $
-      pvalueOf # getField @"mint" txInfo # ownSym # tn #== amt
+checkMintingAmount amt tn ctx' = do
+  ctx <- tcont $ pletFields @'["txInfo", "purpose"] ctx'
+  PMinting mintFlds <- tcont . pmatch $ getField @"purpose" ctx
+  let ownSym = pfield @"_0" # mintFlds
+  txInfo <- tcont $ pletFields @'["mint"] $ getField @"txInfo" ctx
+  pguardC "204" $
+    pvalueOf # getField @"mint" txInfo # ownSym # tn #== amt
 
 checkNftIsInTxInput :: Term s PCurrencySymbol -> Term s PTokenName -> Term s PScriptContext -> TermCont s ()
 checkNftIsInTxInput cs tn ctx = do
@@ -64,16 +70,17 @@ checkNftIsInTxOutput cs tn ctx = do
   let outputs = getAllTxOutputs # ctx
   checkNftIsInTxOutList "206" cs tn outputs
   pure ()
-      
+
 checkNftIsInTxOutList :: Term s PString -> Term s PCurrencySymbol -> Term s PTokenName -> Term s (PBuiltinList PTxOut) -> TermCont s ()
-checkNftIsInTxOutList errMsg cs tn txOuts = do 
-  pguardC errMsg $ 
-      List.pany 
-        # plam (\out ->
-            let inputValue = pfield @"value" # out 
+checkNftIsInTxOutList errMsg cs tn txOuts = do
+  pguardC errMsg $
+    List.pany
+      # plam
+        ( \out ->
+            let inputValue = pfield @"value" # out
              in pvalueOf # inputValue # cs # tn #== 1
-          ) 
-        # txOuts
+        )
+      # txOuts
 
 checkNftIsInValue :: Term s PString -> Term s PCurrencySymbol -> Term s PTokenName -> Term s SortedPositiveValue -> TermCont s ()
 checkNftIsInValue errMsg cs tn val = do
@@ -81,12 +88,11 @@ checkNftIsInValue errMsg cs tn val = do
   pguardC errMsg (nftAmt #== 1)
 
 checkValidTimeRange :: Term s PPOSIXTimeRange -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkValidTimeRange validTimeRange txInfo = do 
+checkValidTimeRange validTimeRange txInfo = do
   let txTimeRange = pfield @"validRange" # txInfo
   pguardC "207" (pcontains # validTimeRange # txTimeRange)
 
 checkIsSignedBy :: Term s PString -> Term s PPubKeyHash -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkIsSignedBy errMsg pkh txInfo = do
-  let 
-    signatories = pfield @"signatories" # txInfo
+  let signatories = pfield @"signatories" # txInfo
   pguardC errMsg $ pelem # pdata pkh # pfromData signatories
