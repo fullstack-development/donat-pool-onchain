@@ -4,9 +4,12 @@ module Protocol.Validator where
 
 import Ext.Plutarch.Extra.ApiV2
 import Ext.Plutus.MinAda
+import Fundraising.Datum
+import Fundraising.Model (Fundraising (Fundraising))
 import Generics.SOP
 import Plutarch.Api.V1.Value
 import Plutarch.Api.V2
+import Plutarch.Bool
 import Plutarch.Builtin
 import Plutarch.DataRepr
 import Plutarch.Extra.TermCont
@@ -32,6 +35,8 @@ protocolValidator :: ClosedTerm (PProtocol :--> PValidator)
 protocolValidator = plam $ \protocol datm redm ctx -> P.do
   (dat, _) <- ptryFrom @PProtocolDatum datm
   (red, _) <- ptryFrom @PProtocolRedeemer redm
+  let txInfo = getCtxInfoForSpending # ctx
+  let protocolOutput = getOnlyOneOwnOutput # ctx
   pmatch red $ \case
     PUpdateProtocolConfig redData -> popaque . unTermCont $ do
       checkSignedByManager protocol ctx
@@ -41,10 +46,13 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
       let fundriseConfig = pfield @"_0" # redData
       let fundriseAddress = pfield @"scriptAddress" # fundriseConfig
       let fundriseOutput = getOutputByAddress # ctx # fundriseAddress
-      -- TODO: add checks
+      checkProtocolValueNotChanged protocol ctx protocolOutput
+      checkProtocolDatumNotChanged dat ctx protocolOutput
+      checkFrTokensMinted fundriseConfig txInfo
+      checkFundriseOutputDatum dat fundriseOutput ctx
+      checkFundriseOutputValue fundriseConfig fundriseOutput
       pure $ pconstant ()
     PCloseProtocol _ -> popaque . unTermCont $ do
-      let txInfo = getCtxInfoForSpending # ctx
       checkNoOutputs ctx
       checkNftBurned protocol txInfo
       pure $ pconstant ()
@@ -81,12 +89,7 @@ checkProtocolValueNotChanged protocol ctx txOut = do
   pure ()
 
 checkNftBurned :: Term s PProtocol -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkNftBurned protocol = checkNftBurnt (protocolSymbol protocol) (protocolToken protocol)
-
-checkFrTokensMinted :: Term s PFundriseConfig -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkFrTokensMinted frConfig = do
-  checkNftMinted (pfield @"verCurrencySymbol" # frConfig) (pfield @"verTokenName" # frConfig)
-  checkNftMinted (pfield @"threadCurrencySymbol" # frConfig) (pfield @"threadTokenName" # frConfig)
+checkNftBurned protocol = checkNftMinted "123" (-1) (protocolSymbol protocol) (protocolToken protocol)
 
 checkProtocolDatumNotChanged :: Term s PProtocolDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkProtocolDatumNotChanged inDatum ctx txOut = do
@@ -94,3 +97,28 @@ checkProtocolDatumNotChanged inDatum ctx txOut = do
   (outDatum, _) <- ptryFromC @PProtocolDatum outDatum'
   pguardC "117" (inDatum #== outDatum)
   pure ()
+
+checkFrTokensMinted :: Term s PFundriseConfig -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkFrTokensMinted frConfig = do
+  checkNftMinted "124" 1 (pfield @"verCurrencySymbol" # frConfig) (pfield @"verTokenName" # frConfig)
+  checkNftMinted "125" 1 (pfield @"threadCurrencySymbol" # frConfig) (pfield @"threadTokenName" # frConfig)
+
+checkFundriseOutputDatum :: Term s PProtocolDatum -> Term s PTxOut -> Term s PScriptContext -> TermCont s ()
+checkFundriseOutputDatum protocolDatum frTxOut ctx = do
+  let frOutDatum' = inlineDatumFromOutput # ctx # frTxOut
+  (frOutDatum, _) <- ptryFromC @PFundraisingDatum frOutDatum'
+  pguardC "118" (pfield @"frFee" # frOutDatum #== pfield @"protocolFee" # protocolDatum)
+  let minAmount = pfromData $ pfield @"minAmount" # protocolDatum
+  let maxAmount = pfromData $ pfield @"maxAmount" # protocolDatum
+  let frAmount = pfromData $ pfield @"frAmount" # frOutDatum
+  pguardC "119" (minAmount #<= frAmount #&& frAmount #<= maxAmount)
+  -- TODO: check deadline
+  pure ()
+
+checkFundriseOutputValue :: Term s PFundriseConfig -> Term s PTxOut -> TermCont s ()
+checkFundriseOutputValue frConfig frTxOut = do
+  let value = pfield @"value" # frTxOut
+  let adaAmount = plovelaceValueOf # value
+  checkNftIsInValue "120" (pfield @"verCurrencySymbol" # frConfig) (pfield @"verTokenName" # frConfig) value
+  checkNftIsInValue "121" (pfield @"threadCurrencySymbol" # frConfig) (pfield @"threadTokenName" # frConfig) value
+  pguardC "122" (adaAmount #== minTxOut)

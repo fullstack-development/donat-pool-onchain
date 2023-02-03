@@ -29,19 +29,17 @@ checkNoOutputs ctx = do
     PNil -> pure $ pconstant ()
     PCons _ _ -> pure $ ptraceError "201"
 
--- TODO: refactor nft checks
-checkNftBurnt :: Term s PCurrencySymbol -> Term s PTokenName -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkNftBurnt currency tokenName txInfo = do
+checkNftMinted ::
+  Term s PString ->
+  Term s PInteger ->
+  Term s PCurrencySymbol ->
+  Term s PTokenName ->
+  Term s (PAsData PTxInfo) ->
+  TermCont s ()
+checkNftMinted errMsg amount currency tokenName txInfo = do
   let mintValue = pfield @"mint" # txInfo
       mintingTokenAmount = pvalueOf # mintValue # currency # tokenName
-  pguardC "202" $ mintingTokenAmount #== -1
-  pure ()
-
-checkNftMinted :: Term s PCurrencySymbol -> Term s PTokenName -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkNftMinted currency tokenName txInfo = do
-  let mintValue = pfield @"mint" # txInfo
-      mintingTokenAmount = pvalueOf # mintValue # currency # tokenName
-  pguardC "202.1" $ mintingTokenAmount #== 1
+  pguardC errMsg $ mintingTokenAmount #== amount
   pure ()
 
 checkPkhReceiveScriptValue :: Term s PPubKeyHash -> Term s PInteger -> Term s (PAsData PTxInfo) -> TermCont s ()
