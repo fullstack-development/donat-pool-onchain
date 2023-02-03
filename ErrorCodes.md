@@ -14,6 +14,7 @@
 123: should burn 1 thread token on close protocol
 124: should mint verToken on start fundrising
 125: should mint threadToken on start fundrising
+126: fundraising duration is out of configured in protocol range
 
 ## Shared.Checks
 201: 1 or more outputs found in context, expected 0

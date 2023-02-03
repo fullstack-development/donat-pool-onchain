@@ -126,7 +126,7 @@ checkFundriseOutputDatum protocolDatum frConfig frTxOut ctx = do
   let frStartedAt = pfield @"startedAt" # frConfig
   let frDeadline = pfield @"frDeadline" # frOutDatum
   let frDuration = pinterval # frStartedAt # frDeadline
-  pguardC "120" (pcontains # permittedDuration # frDuration)
+  pguardC "126" (pcontains # permittedDuration # frDuration)
 
   pure ()
 
