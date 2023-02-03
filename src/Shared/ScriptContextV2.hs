@@ -11,7 +11,7 @@ import Plutarch.Builtin
 import Plutarch.DataRepr
 import Plutarch.Extra.Maybe
 import Plutarch.Extra.TermCont
-import qualified Plutarch.List as List 
+import qualified Plutarch.List as List
 import qualified Plutarch.Monadic as P
 import Plutarch.Prelude
 import PlutusCore (Closed)
@@ -110,15 +110,25 @@ getOnlyOneOutputFromList = phoistAcyclic $
 
 getAllTxInputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
 getAllTxInputs = phoistAcyclic $
-  plam $ \ctx -> 
-    let 
-      txInfo = pfield @"txInfo" # ctx
-      inputs = pfield @"inputs" # txInfo
-    in List.pmap # (plam (\txIn -> pfield @"resolved" # txIn)) # inputs
+  plam $ \ctx ->
+    let txInfo = pfield @"txInfo" # ctx
+        inputs = pfield @"inputs" # txInfo
+     in List.pmap # plam (\txIn -> pfield @"resolved" # txIn) # inputs
 
 getAllTxOutputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
 getAllTxOutputs = phoistAcyclic $
   plam $ \ctx ->
-    let 
-      txInfo = pfield @"txInfo" # ctx
+    let txInfo = pfield @"txInfo" # ctx
      in pfield @"outputs" # txInfo
+
+getOutputByAddress :: Term s (PScriptContext :--> PAddress :--> PTxOut)
+getOutputByAddress = phoistAcyclic $
+  plam $ \ctx addr ->
+    let outputs = getAllTxOutputs # ctx
+        outsFilteredByAddress = pfilter # (matches # addr) # outputs
+     in getOnlyOneOutputFromList # outsFilteredByAddress
+  where
+    matches :: Term s (PAddress :--> PTxOut :--> PBool)
+    matches = phoistAcyclic $
+      plam $ \adr txOut ->
+        adr #== pfield @"address" # txOut

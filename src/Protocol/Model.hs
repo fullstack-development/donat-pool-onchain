@@ -3,6 +3,7 @@ module Protocol.Model where
 import Data.Typeable
 import qualified GHC.Generics as GHC
 import Plutarch.Api.V1
+import Plutarch.Api.V1.Scripts (PScriptHash)
 import Plutarch.DataRepr
 import Plutarch.Prelude
 import PlutusLedgerApi.V1 (CurrencySymbol, PubKeyHash, TokenName)
@@ -63,3 +64,26 @@ instance DerivePlutusType PProtocolConfig where
 instance PTryFrom PData PProtocolConfig
 
 instance PTryFrom PData (PAsData PProtocolConfig)
+
+data PFundriseConfig (s :: S)
+  = PFundriseConfig
+      ( Term
+          s
+          ( PDataRecord
+              '[ "scriptAddress" ':= PAddress
+               , "verCurrencySymbol" ':= PCurrencySymbol
+               , "verTokenName" ':= PTokenName
+               , "threadCurrencySymbol" ':= PCurrencySymbol
+               , "threadTokenName" := PTokenName
+               ]
+          )
+      )
+  deriving stock (GHC.Generic)
+  deriving anyclass (PlutusType, PIsData, PDataFields)
+
+instance DerivePlutusType PFundriseConfig where
+  type DPTStrat _ = PlutusTypeData
+
+instance PTryFrom PData PFundriseConfig
+
+instance PTryFrom PData (PAsData PFundriseConfig)

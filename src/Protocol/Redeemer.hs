@@ -1,6 +1,7 @@
 module Protocol.Redeemer where
 
 import qualified GHC.Generics as GHC
+import Plutarch.Api.V1 (PCurrencySymbol)
 import Plutarch.DataRepr
 import Plutarch.Prelude
 import Protocol.Datum
@@ -8,6 +9,7 @@ import Protocol.Model
 
 data PProtocolRedeemer (s :: S)
   = PUpdateProtocolConfig (Term s (PDataRecord '["_0" ':= PProtocolConfig]))
+  | PStartFundrise (Term s (PDataRecord '["_0" ':= PFundriseConfig]))
   | PCloseProtocol (Term s (PDataRecord '[]))
   deriving stock (Generic)
   deriving anyclass (PlutusType, PIsData)

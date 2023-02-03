@@ -37,6 +37,12 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
       checkSignedByManager protocol ctx
       checkUpdateProtocolOutput protocol dat ctx
       pure $ pconstant ()
+    PStartFundrise redData -> popaque . unTermCont $ do
+      let fundriseConfig = pfield @"_0" # redData
+      let fundriseAddress = pfield @"scriptAddress" # fundriseConfig
+      let fundriseOutput = getOutputByAddress # ctx # fundriseAddress
+      -- TODO: add checks
+      pure $ pconstant ()
     PCloseProtocol _ -> popaque . unTermCont $ do
       let txInfo = getCtxInfoForSpending # ctx
       checkNoOutputs ctx
@@ -55,7 +61,7 @@ checkUpdateProtocolOutput :: Term s PProtocol -> Term s PProtocolDatum -> Term s
 checkUpdateProtocolOutput protocol inDatum ctx = do
   let output = getOnlyOneOwnOutput # ctx
   checkUpdateProtocolDatum inDatum ctx output
-  checkUpdateProtocolValue protocol ctx output
+  checkProtocolValueNotChanged protocol ctx output
   pure ()
 
 checkUpdateProtocolDatum :: Term s PProtocolDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
@@ -67,8 +73,8 @@ checkUpdateProtocolDatum inDatum ctx txOut = do
   pguardC "114" (pnot #$ inDatum #== outDatum)
   pure ()
 
-checkUpdateProtocolValue :: Term s PProtocol -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
-checkUpdateProtocolValue protocol ctx txOut = do
+checkProtocolValueNotChanged :: Term s PProtocol -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
+checkProtocolValueNotChanged protocol ctx txOut = do
   let inValue = getOwnInputValue # ctx
   let outValue = pfield @"value" # txOut
   pguardC "115" (inValue #== outValue)
@@ -78,3 +84,15 @@ checkUpdateProtocolValue protocol ctx txOut = do
 
 checkNftBurned :: Term s PProtocol -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkNftBurned protocol = checkNftBurnt (protocolSymbol protocol) (protocolToken protocol)
+
+checkFrTokensMinted :: Term s PFundriseConfig -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkFrTokensMinted frConfig = do
+  checkNftMinted (pfield @"verCurrencySymbol" # frConfig) (pfield @"verTokenName" # frConfig)
+  checkNftMinted (pfield @"threadCurrencySymbol" # frConfig) (pfield @"threadTokenName" # frConfig)
+
+checkProtocolDatumNotChanged :: Term s PProtocolDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
+checkProtocolDatumNotChanged inDatum ctx txOut = do
+  let outDatum' = inlineDatumFromOutput # ctx # txOut
+  (outDatum, _) <- ptryFromC @PProtocolDatum outDatum'
+  pguardC "117" (inDatum #== outDatum)
+  pure ()
