@@ -12,6 +12,7 @@ import Plutarch.Api.V2
 import Plutarch.Bool
 import Plutarch.Builtin
 import Plutarch.DataRepr
+import Plutarch.Extra.Interval
 import Plutarch.Extra.TermCont
 import qualified Plutarch.Monadic as P
 import Plutarch.Prelude
@@ -49,7 +50,7 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
       checkProtocolValueNotChanged protocol ctx protocolOutput
       checkProtocolDatumNotChanged dat ctx protocolOutput
       checkFrTokensMinted fundriseConfig txInfo
-      checkFundriseOutputDatum dat fundriseOutput ctx
+      checkFundriseOutputDatum dat fundriseConfig fundriseOutput ctx
       checkFundriseOutputValue fundriseConfig fundriseOutput
       pure $ pconstant ()
     PCloseProtocol _ -> popaque . unTermCont $ do
@@ -103,16 +104,30 @@ checkFrTokensMinted frConfig = do
   checkNftMinted "124" 1 (pfield @"verCurrencySymbol" # frConfig) (pfield @"verTokenName" # frConfig)
   checkNftMinted "125" 1 (pfield @"threadCurrencySymbol" # frConfig) (pfield @"threadTokenName" # frConfig)
 
-checkFundriseOutputDatum :: Term s PProtocolDatum -> Term s PTxOut -> Term s PScriptContext -> TermCont s ()
-checkFundriseOutputDatum protocolDatum frTxOut ctx = do
+checkFundriseOutputDatum ::
+  Term s PProtocolDatum ->
+  Term s PFundriseConfig ->
+  Term s PTxOut ->
+  Term s PScriptContext ->
+  TermCont s ()
+checkFundriseOutputDatum protocolDatum frConfig frTxOut ctx = do
   let frOutDatum' = inlineDatumFromOutput # ctx # frTxOut
   (frOutDatum, _) <- ptryFromC @PFundraisingDatum frOutDatum'
   pguardC "118" (pfield @"frFee" # frOutDatum #== pfield @"protocolFee" # protocolDatum)
+
   let minAmount = pfromData $ pfield @"minAmount" # protocolDatum
   let maxAmount = pfromData $ pfield @"maxAmount" # protocolDatum
   let frAmount = pfromData $ pfield @"frAmount" # frOutDatum
   pguardC "119" (minAmount #<= frAmount #&& frAmount #<= maxAmount)
-  -- TODO: check deadline
+
+  let minDuration = pfield @"minDuration" # protocolDatum
+  let maxDuration = pfield @"maxDuration" # protocolDatum
+  let permittedDuration = pinterval # minDuration # maxDuration
+  let frStartedAt = pfield @"startedAt" # frConfig
+  let frDeadline = pfield @"frDeadline" # frOutDatum
+  let frDuration = pinterval # frStartedAt # frDeadline
+  pguardC "120" (pcontains # permittedDuration # frDuration)
+
   pure ()
 
 checkFundriseOutputValue :: Term s PFundriseConfig -> Term s PTxOut -> TermCont s ()
