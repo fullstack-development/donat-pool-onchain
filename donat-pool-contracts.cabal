@@ -92,6 +92,10 @@ library
     Ext.Plutarch.Extra.ApiV2
     Ext.Plutus.MinAda
     Ext.Ply.Plutarch.TypedWriter
+    Fundraising.Datum
+    Fundraising.Model
+    Fundraising.Redeemer
+    Fundraising.Validator
     MintingPolicy.NFT
     MintingPolicy.VerToken
     Protocol.Datum

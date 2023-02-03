@@ -1,6 +1,7 @@
 module Ext.Plutarch.Extra.ApiV2 (
   pgetContinuingOutputs,
   pfindOwnInput,
+  pmax,
 ) where
 
 import Plutarch.Api.V2 (
@@ -78,3 +79,6 @@ pfindOwnInput = phoistAcyclic $
 
 ptryFromData :: forall a s. PTryFrom PData (PAsData a) => Term s PData -> Term s (PAsData a)
 ptryFromData x = unTermCont $ fst <$> tcont (ptryFrom @(PAsData a) x)
+
+pmax :: POrd a => Term s (a :--> a :--> a)
+pmax = phoistAcyclic $ plam $ \a b -> pif (a #<= b) b a
