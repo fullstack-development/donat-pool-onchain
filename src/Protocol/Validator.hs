@@ -3,6 +3,7 @@
 module Protocol.Validator where
 
 import Ext.Plutarch.Extra.ApiV2
+import Ext.Plutarch.Extra.Time
 import Ext.Plutus.MinAda
 import Fundraising.Datum
 import Fundraising.Model (Fundraising (Fundraising))
@@ -120,13 +121,23 @@ checkFundriseOutputDatum protocolDatum frConfig frTxOut ctx = do
   let frAmount = pfromData $ pfield @"frAmount" # frOutDatum
   pguardC "119" (minAmount #<= frAmount #&& frAmount #<= maxAmount)
 
-  let minDuration = pfield @"minDuration" # protocolDatum
-  let maxDuration = pfield @"maxDuration" # protocolDatum
-  let permittedDuration = pinterval # minDuration # maxDuration
   let frStartedAt = pfield @"startedAt" # frConfig
   let frDeadline = pfield @"frDeadline" # frOutDatum
   let frDuration = pinterval # frStartedAt # frDeadline
-  pguardC "126" (pcontains # permittedDuration # frDuration)
+
+  let minDurationDays = pfromData $ pfield @"minDuration" # protocolDatum
+  let minDurationMs = daysToMilliseconds # minDurationDays
+  let minDurationPosix = toPosixTime # minDurationMs
+  let minDuration = addTimes # frStartedAt # pdata minDurationPosix
+
+  let maxDurationDays = pfromData $ pfield @"maxDuration" # protocolDatum
+  let maxDurationMs = daysToMilliseconds # maxDurationDays
+  let maxDurationPosix = toPosixTime # maxDurationMs
+  let maxDuration = addTimes # frStartedAt # pdata maxDurationPosix
+
+  let permittedDuration = pinterval # minDuration # maxDuration
+
+  pguardC "126" (pcontains # frDuration # frDuration)
 
   pure ()
 

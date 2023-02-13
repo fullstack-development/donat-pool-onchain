@@ -1,4 +1,4 @@
-module Fundraising.Model where 
+module Fundraising.Model where
 
 import Data.Typeable
 import qualified GHC.Generics as GHC

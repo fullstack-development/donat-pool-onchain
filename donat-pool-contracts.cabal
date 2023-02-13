@@ -90,6 +90,7 @@ library
   hs-source-dirs:  src
   exposed-modules:
     Ext.Plutarch.Extra.ApiV2
+    Ext.Plutarch.Extra.Time
     Ext.Plutus.MinAda
     Ext.Ply.Plutarch.TypedWriter
     Fundraising.Datum
