@@ -22,7 +22,6 @@
 204: Wrong NFT mint amount
 205: NFT missed in transaction inputs
 206: NFT missed in transaction outputs
-207: Invalid tx time range
 
 ## Shared.ScriptContextV2
 301: no datum in script output
@@ -48,3 +47,4 @@
 412: Impossible to receive funds as fundraising is not completed
 413: should burn verToken on close fundraising
 413: should burn threadToken on close fundraising
+414: can't donate after fundrising deadline

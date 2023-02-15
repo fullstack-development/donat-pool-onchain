@@ -17,6 +17,8 @@ data PFundraising (s :: S)
               '[ "protocol" ':= PProtocol
                , "verTokenCurrency" ':= PCurrencySymbol
                , "verTokenName" ':= PTokenName
+               , "threadTokenCurrency" ':= PCurrencySymbol
+               , "threadTokenName" ':= PTokenName
                ]
           )
       )
@@ -34,10 +36,18 @@ verTokenSymbol fundraising = pfield @"verTokenCurrency" # fundraising
 verToken :: Term s PFundraising -> Term s PTokenName
 verToken fundraising = pfield @"verTokenName" # fundraising
 
+threadTokenSymbol :: Term s PFundraising -> Term s PCurrencySymbol
+threadTokenSymbol fundraising = pfield @"threadTokenCurrency" # fundraising
+
+threadToken :: Term s PFundraising -> Term s PTokenName
+threadToken fundraising = pfield @"threadTokenName" # fundraising
+
 data Fundraising = Fundraising
   { protocol :: Protocol
   , verTokenCurrency :: CurrencySymbol
   , verTokenName :: TokenName
+  , threadTokenCurrency :: CurrencySymbol
+  , threadTokenName :: TokenName
   }
 
 type instance PlyArgOf PFundraising = Fundraising
