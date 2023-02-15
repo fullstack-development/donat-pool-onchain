@@ -1,4 +1,4 @@
-module Fundraising.Datum where 
+module Fundraising.Datum where
 
 import qualified GHC.Generics as GHC
 import Plutarch.Api.V1
@@ -11,11 +11,11 @@ data PFundraisingDatum (s :: S)
           s
           ( PDataRecord
               '[ "creatorPkh" ':= PPubKeyHash
-                , "tokenOrigin" ':= PTxOutRef
-                , "frDesc" ':= PByteString
-                , "frAmount" ':= PInteger
-                , "frDeadline" ':= PPOSIXTime
-                , "frFee" ':= PInteger
+               , "tokenOrigin" ':= PTxOutRef
+               , "frDesc" ':= PByteString
+               , "frAmount" ':= PInteger
+               , "frDeadline" ':= PPOSIXTime
+               , "frFee" ':= PInteger
                ]
           )
       )

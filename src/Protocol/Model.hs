@@ -75,8 +75,8 @@ data PFundriseConfig (s :: S)
                , "verCurrencySymbol" ':= PCurrencySymbol
                , "verTokenName" ':= PTokenName
                , "threadCurrencySymbol" ':= PCurrencySymbol
-               , "threadTokenName" := PTokenName
-               , "startedAt" := PPOSIXTime
+               , "threadTokenName" ':= PTokenName
+               , "startedAt" ':= PPOSIXTime
                ]
           )
       )
