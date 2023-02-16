@@ -132,3 +132,11 @@ getOutputByAddress = phoistAcyclic $
     matches = phoistAcyclic $
       plam $ \adr txOut ->
         adr #== pfield @"address" # txOut
+
+getLowerBoundTime :: Term s (PAsData (PInterval PPOSIXTime) :--> PAsData PPOSIXTime)
+getLowerBoundTime = phoistAcyclic $
+  plam $ \interval ->
+    let lowerBound = pfield @"from" # interval
+     in pmatch (pfield @"_0" # lowerBound) $ \case
+          PFinite finite -> pfield @"_0" # finite
+          _ -> ptraceError "Can't get time from infinite bound"

@@ -115,5 +115,7 @@ checkFundraisingCompleted afterDeadlineRange raisedFunds desiredFunds txInfo = d
 checkDonatedBeforeDeadline :: Term s (PAsData PPOSIXTime) -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkDonatedBeforeDeadline deadline txInfo = do
   let txRange = pfield @"validRange" # txInfo
-  let intervalBeforeDeadline = pto # deadline
-  pguardC "415" $ pcontains # txRange # intervalBeforeDeadline
+  let donatedAt = pfromData $ getLowerBoundTime # txRange
+  let fundrisingInterval = pto # deadline
+  let donatedAfterDeadline = pafter # donatedAt # fundrisingInterval
+  pguardC "415" $ pnot # donatedAfterDeadline
