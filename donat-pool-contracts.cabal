@@ -108,7 +108,7 @@ library
     Validator.AlwaysSucceeds
     Validator.TestValidator
 
-executable donat-pool-contracts
+executable compile
   import:         common-lang
   import:         common-configs
   import:         common-deps

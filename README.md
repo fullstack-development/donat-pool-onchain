@@ -17,4 +17,10 @@ run `nix develop` and then `cabal build all` to compile project.
 
 # Compiling Plutus scripts
 
-For compiling Plutus scripts make sure that you have `compiled` folder in the project root and run `cabal run`.
+For compiling Plutus scripts make sure that you have `compiled` folder in the project root and run `cabal run compile`.
+
+# Copy compiled scripts to offchain directory
+
+After scripts will be compiled we can copy them to offchain project:
+
+`cabal run copy-scripts`
