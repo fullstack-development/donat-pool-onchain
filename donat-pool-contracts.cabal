@@ -116,3 +116,17 @@ executable donat-pool-contracts
   hs-source-dirs: app
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   build-depends:  donat-pool-contracts
+
+executable copy-scripts
+  import:         common-lang
+  import:         common-configs
+  import:         common-deps
+  main-is:        CopyScripts.hs
+  hs-source-dirs: app
+  ghc-options:    -threaded
+  build-depends:
+    , aeson
+    , aeson-casing
+    , aeson-pretty
+    , bytestring
+    , directory
