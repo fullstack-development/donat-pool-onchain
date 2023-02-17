@@ -5,6 +5,7 @@ module Shared.ScriptContextV2 where
 import Ext.Plutarch.Extra.ApiV2
 import Generics.SOP
 import Plutarch.Api.V1.Address
+import qualified Plutarch.Api.V1.AssocMap as AssocMap
 import Plutarch.Api.V1.Value
 import Plutarch.Api.V2
 import Plutarch.Builtin
@@ -13,7 +14,8 @@ import Plutarch.Extra.Maybe
 import Plutarch.Extra.TermCont
 import qualified Plutarch.List as List
 import qualified Plutarch.Monadic as P
-import Plutarch.Prelude
+import Plutarch.Prelude hiding (psingleton)
+import Plutarch.Unsafe (punsafeCoerce, punsafeDowncast)
 import PlutusCore (Closed)
 import qualified PlutusCore as PLC
 import PlutusLedgerApi.V2 (PubKeyHash, TxOut)
@@ -82,12 +84,11 @@ getOwnInputValue = phoistAcyclic $
     let txOut = getOwnInputOrTraceError # ctx
      in pfield @"value" # txOut
 
-pubKeyOutputsAt :: Term s (PPubKeyHash :--> PAsData PTxInfo :--> PTxOut)
+pubKeyOutputsAt :: Term s (PPubKeyHash :--> PAsData PTxInfo :--> PBuiltinList PTxOut)
 pubKeyOutputsAt = phoistAcyclic $
   plam $ \pkh txInfo ->
     let outputs = pfield @"outputs" # txInfo
-        pkhOutputs = pfilter # (matches # pkh) # outputs
-     in getOnlyOneOutputFromList # pkhOutputs
+     in pfilter # (matches # pkh) # outputs
   where
     matches :: Term s (PPubKeyHash :--> PTxOut :--> PBool)
     matches = phoistAcyclic $
@@ -98,9 +99,40 @@ pubKeyOutputsAt = phoistAcyclic $
               PPubKeyCredential pkh' -> (pfield @"_0" # pkh') #== pkh
               _ -> pconstant False
 
+pubKeySingleOutputAt :: Term s (PPubKeyHash :--> PAsData PTxInfo :--> PTxOut)
+pubKeySingleOutputAt = phoistAcyclic $
+  plam $ \pkh txInfo ->
+    let pkhOutputs = pubKeyOutputsAt # pkh # txInfo
+     in getOnlyOneOutputFromList # pkhOutputs
+
+-- TODO: move to ext Plutarch.Value
+pPositiveSingleton ::
+  Term
+    s
+    (PCurrencySymbol :--> PTokenName :--> PInteger :--> PValue 'Sorted 'Positive)
+pPositiveSingleton = phoistAcyclic $
+  plam $ \symbol token amount ->
+    pif
+      (0 #<= amount)
+      mempty
+      (punsafeDowncast $ AssocMap.psingleton # symbol #$ AssocMap.psingleton # token # amount)
+
+pubKeyContainsAmountOutput :: Term s (PPubKeyHash :--> PAsData PTxInfo :--> PInteger :--> PBuiltinList PTxOut)
+pubKeyContainsAmountOutput = phoistAcyclic $
+  plam $ \pkh txInfo amount ->
+    let pkhOutputs = pubKeyOutputsAt # pkh # txInfo
+     in pfilter # (matches # amount) # pkhOutputs
+  where
+    matches :: Term s (PInteger :--> PTxOut :--> PBool)
+    matches = phoistAcyclic $
+      plam $ \amount txOut ->
+        let txOutValue = pfield @"value" # txOut
+            adaAmountValue = pPositiveSingleton # padaSymbol # padaToken # amount
+         in txOutValue #== adaAmountValue
+
 getOnlyOneOutputFromList :: Term s (PBuiltinList PTxOut :--> PTxOut)
 getOnlyOneOutputFromList = phoistAcyclic $
-  plam $ \outputs ->
+  plam $ \outputs -> -- any
     pmatch outputs $ \case
       PNil -> ptraceError "306"
       PCons scriptTxOut rest -> do

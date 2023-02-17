@@ -68,7 +68,7 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
         checkNftMinted "413" (-1) verTokenCS verTokenName txInfo
         checkNftMinted "414" (-1) threadTokenCS threadTokenName txInfo
         checkIsSignedBy "411" creatorPkh txInfo
-        checkPkhReceiveScriptValue managerPkh feePayment txInfo
+        checkManagerReceiveFee managerPkh feePayment txInfo
         checkFundraisingCompleted validInterval raisedFunds desiredFunds txInfo
         pure $ pconstant ()
 
@@ -119,3 +119,18 @@ checkDonatedBeforeDeadline deadline txInfo = do
   let fundrisingInterval = pto # deadline
   let donatedAfterDeadline = pafter # donatedAt # fundrisingInterval
   pguardC "415" $ pnot # donatedAfterDeadline
+
+-- checkOwnerReceiveScriptValue :: Term s PPubKeyHash -> Term s PInteger -> Term s PInteger -> Term s (PAsData PTxInfo) -> TermCont s ()
+-- checkOwnerReceiveScriptValue pkh raisedFunds feeFromRaisedFunds txOut = do
+--   let pkhOutput = pubKeySingleOutputAt # pkh # txOut
+--       pkhOutputValue = pfield @"value" # pkhOutput
+--       adaSentToPkh = pvalueOf # pkhOutputValue # padaSymbol # padaToken
+--   -- (raisedFunds - feeFromRaisedFunds) <= (raisedFunds - feeFromRaisedFunds + minAda - txFee)
+--   pguardC "203" $ (raisedFunds - feeFromRaisedFunds) #<= adaSentToPkh
+--   pure ()
+
+checkManagerReceiveFee :: Term s PPubKeyHash -> Term s PInteger -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkManagerReceiveFee managerPkh fee txOut = do
+  let outputsWithFeeValue = pubKeyContainsAmountOutput # managerPkh # txOut # fee
+  pguardC "203" $ pnot # (pnull # outputsWithFeeValue)
+  pure ()
