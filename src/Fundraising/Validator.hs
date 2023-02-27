@@ -42,29 +42,28 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
   pmatch red $ \case
     PDonate redData -> popaque $
       unTermCont $ do
-        let amountToDonate = pfield @"_2" # redData
-            threadTokenCS = pfield @"_0" # redData
+        let threadTokenCS = pfield @"_0" # redData
             threadTokenName = pfield @"_1" # redData
-            validInterval = pto # deadline
+            amountToDonate = pfield @"_2" # redData
         checkDonateDatum dat ctx output
         checkDonateAdaValue desiredFunds inputAda outputValue amountToDonate
         checkNftIsInValue "405" verTokenCS verTokenName inputValue
         checkNftIsInValue "406" verTokenCS verTokenName outputValue
         checkNftIsInValue "407" threadTokenCS threadTokenName inputValue
         checkNftIsInValue "408" threadTokenCS threadTokenName outputValue
-        checkValidTimeRange validInterval txInfo
+        checkDonatedBeforeDeadline deadline txInfo
         pure $ pconstant ()
     PReceiveFunds redData -> popaque $
       unTermCont $ do
-        let threadTokenCS = pfield @"_0" # redData
-            threadTokenName = pfield @"_1" # redData
-            creatorPkh = pfield @"creatorPkh" # dat
+        let creatorPkh = pfield @"creatorPkh" # dat
             fees = pfield @"frFee" # dat
             raisedFunds = inputAda #- minTxOut
             feePayment = calculateFees # fees # raisedFunds
             protocol = pfield @"protocol" # fundraising
             managerPkh = pfield @"managerPkh" # protocol
             validInterval = pfrom # deadline
+            threadTokenCS = pfield @"_0" # redData
+            threadTokenName = pfield @"_1" # redData
         checkNftIsInValue "409" verTokenCS verTokenName inputValue
         checkNftIsInValue "410" threadTokenCS threadTokenName inputValue
         checkNoOutputs ctx
@@ -114,3 +113,11 @@ checkFundraisingCompleted afterDeadlineRange raisedFunds desiredFunds txInfo = d
       timeClause = pcontains # afterDeadlineRange # txRange
       fundsClause = desiredFunds #<= raisedFunds
   pguardC "412" (por' # timeClause # fundsClause)
+
+checkDonatedBeforeDeadline :: Term s (PAsData PPOSIXTime) -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkDonatedBeforeDeadline deadline txInfo = do
+  let txRange = pfield @"validRange" # txInfo
+  let donatedAt = pfromData $ getLowerBoundTime # txRange
+  let fundrisingInterval = pto # deadline
+  let donatedAfterDeadline = pafter # donatedAt # fundrisingInterval
+  pguardC "415" $ pnot # donatedAfterDeadline

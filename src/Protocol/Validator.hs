@@ -123,21 +123,9 @@ checkFundriseOutputDatum protocolDatum frConfig frTxOut ctx = do
 
   let frStartedAt = pfield @"startedAt" # frConfig
   let frDeadline = pfield @"frDeadline" # frOutDatum
-
   let minDurationDays = pfromData $ pfield @"minDuration" # protocolDatum
-  let minDurationMs = daysToMilliseconds # minDurationDays
-  let minDurationPosix = toPosixTime # minDurationMs
-  let minDuration = addTimes # frStartedAt # pdata minDurationPosix
-
   let maxDurationDays = pfromData $ pfield @"maxDuration" # protocolDatum
-  let maxDurationMs = daysToMilliseconds # maxDurationDays
-  let maxDurationPosix = toPosixTime # maxDurationMs
-  let maxDuration = addTimes # frStartedAt # pdata maxDurationPosix
-
-  let permittedDuration = pinterval # minDuration # maxDuration
-
-  pguardC "126" (pmember # frDeadline # permittedDuration)
-
+  checkPermittedDuration minDurationDays maxDurationDays frStartedAt frDeadline
   pure ()
 
 checkFundriseOutputValue :: Term s PFundriseConfig -> Term s PTxOut -> TermCont s ()

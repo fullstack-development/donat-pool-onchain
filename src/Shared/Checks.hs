@@ -3,6 +3,7 @@
 module Shared.Checks where
 
 import Ext.Plutarch.Extra.ApiV2
+import Ext.Plutarch.Extra.Time
 import Generics.SOP
 import Plutarch.Api.V1.Address
 import Plutarch.Api.V1.Value
@@ -87,12 +88,19 @@ checkNftIsInValue errMsg cs tn val = do
   let nftAmt = pvalueOf # val # cs # tn
   pguardC errMsg (nftAmt #== 1)
 
-checkValidTimeRange :: Term s PPOSIXTimeRange -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkValidTimeRange validTimeRange txInfo = do
-  let txTimeRange = pfield @"validRange" # txInfo
-  pguardC "207" (pcontains # validTimeRange # txTimeRange)
-
 checkIsSignedBy :: Term s PString -> Term s PPubKeyHash -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkIsSignedBy errMsg pkh txInfo = do
   let signatories = pfield @"signatories" # txInfo
   pguardC errMsg $ pelem # pdata pkh # pfromData signatories
+
+checkPermittedDuration ::
+  Term s PInteger ->
+  Term s PInteger ->
+  Term s (PAsData PPOSIXTime) ->
+  Term s (PAsData PPOSIXTime) ->
+  TermCont s ()
+checkPermittedDuration minDurationDays maxDurationDays startedAt deadline = do
+  let minDuration = daysToPosixDuration # minDurationDays # startedAt
+  let maxDuration = daysToPosixDuration # maxDurationDays # startedAt
+  let permittedDuration = pinterval # minDuration # maxDuration
+  pguardC "126" (pmember # deadline # permittedDuration)

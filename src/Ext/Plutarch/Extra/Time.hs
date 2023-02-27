@@ -14,3 +14,10 @@ addTimes = phoistAcyclic $
 
 toPosixTime :: Term s (PInteger :--> PPOSIXTime)
 toPosixTime = phoistAcyclic $ plam $ \milliSeconds -> pcon $ PPOSIXTime milliSeconds
+
+daysToPosixDuration :: Term s (PInteger :--> PAsData PPOSIXTime :--> PAsData PPOSIXTime)
+daysToPosixDuration = phoistAcyclic $
+  plam $ \durationDays startedAt ->
+    let durationMs = daysToMilliseconds # durationDays
+        durationPosix = toPosixTime # durationMs
+     in addTimes # startedAt # pdata durationPosix
