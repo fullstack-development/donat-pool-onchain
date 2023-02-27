@@ -117,11 +117,11 @@ pPositiveSingleton = phoistAcyclic $
       mempty
       (punsafeDowncast $ AssocMap.psingleton # symbol #$ AssocMap.psingleton # token # amount)
 
-pubKeyContainsAmountOutput :: Term s (PPubKeyHash :--> PAsData PTxInfo :--> PInteger :--> PBuiltinList PTxOut)
+pubKeyContainsAmountOutput :: Term s (PPubKeyHash :--> PAsData PTxInfo :--> PInteger :--> PBool)
 pubKeyContainsAmountOutput = phoistAcyclic $
   plam $ \pkh txInfo amount ->
     let pkhOutputs = pubKeyOutputsAt # pkh # txInfo
-     in pfilter # (matches # amount) # pkhOutputs
+     in pany # (matches # amount) # pkhOutputs
   where
     matches :: Term s (PInteger :--> PTxOut :--> PBool)
     matches = phoistAcyclic $
@@ -132,7 +132,7 @@ pubKeyContainsAmountOutput = phoistAcyclic $
 
 getOnlyOneOutputFromList :: Term s (PBuiltinList PTxOut :--> PTxOut)
 getOnlyOneOutputFromList = phoistAcyclic $
-  plam $ \outputs -> -- any
+  plam $ \outputs ->
     pmatch outputs $ \case
       PNil -> ptraceError "306"
       PCons scriptTxOut rest -> do
