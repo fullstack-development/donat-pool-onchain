@@ -6,11 +6,12 @@ import Plutarch.DataRepr
 import Plutarch.Prelude
 
 -- Note:
--- _0 - amount ot donate in Ada - must be greater than minAda
--- _1 - donatedAt
+-- _0 - Fundraising ThreadToken CurrencySymbol
+-- _1 - Fundraising ThreadToken Token name
+-- _2 - amount ot donate in Ada - must be greater than minAda
 data PFundraisingRedeemer (s :: S)
-  = PDonate (Term s (PDataRecord '["_0" ':= PInteger]))
-  | PReceiveFunds (Term s (PDataRecord '[]))
+  = PDonate (Term s (PDataRecord '["_0" ':= PCurrencySymbol, "_1" ':= PTokenName, "_2" ':= PInteger]))
+  | PReceiveFunds (Term s (PDataRecord '["_0" ':= PCurrencySymbol, "_1" ':= PTokenName]))
   deriving stock (Generic)
   deriving anyclass (PlutusType, PIsData)
 

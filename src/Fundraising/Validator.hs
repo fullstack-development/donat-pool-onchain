@@ -32,8 +32,6 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
   (red, _) <- ptryFrom @PFundraisingRedeemer redm
   let verTokenCS = pfield @"verTokenCurrency" # fundraising
       verTokenName = pfield @"verTokenName" # fundraising
-      threadTokenCS = pfield @"threadTokenCurrency" # fundraising
-      threadTokenName = pfield @"threadTokenName" # fundraising
       output = getOnlyOneOwnOutput # ctx
       inputValue = getOwnInputValue # ctx
       inputAda = plovelaceValueOf # inputValue
@@ -44,7 +42,9 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
   pmatch red $ \case
     PDonate redData -> popaque $
       unTermCont $ do
-        let amountToDonate = pfield @"_0" # redData
+        let threadTokenCS = pfield @"_0" # redData
+            threadTokenName = pfield @"_1" # redData
+            amountToDonate = pfield @"_2" # redData
         checkDonateDatum dat ctx output
         checkDonateAdaValue desiredFunds inputAda outputValue amountToDonate
         checkNftIsInValue "405" verTokenCS verTokenName inputValue
@@ -62,6 +62,8 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
             protocol = pfield @"protocol" # fundraising
             managerPkh = pfield @"managerPkh" # protocol
             validInterval = pfrom # deadline
+            threadTokenCS = pfield @"_0" # redData
+            threadTokenName = pfield @"_1" # redData
         checkNftIsInValue "409" verTokenCS verTokenName inputValue
         checkNftIsInValue "410" threadTokenCS threadTokenName inputValue
         checkNoOutputs ctx
