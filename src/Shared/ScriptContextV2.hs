@@ -7,6 +7,7 @@ import Generics.SOP
 import Plutarch.Api.V1.Address
 import qualified Plutarch.Api.V1.AssocMap as AssocMap
 import Plutarch.Api.V1.Value
+import qualified Plutarch.Api.V1.Value as Value
 import Plutarch.Api.V2
 import Plutarch.Builtin
 import Plutarch.DataRepr
@@ -105,18 +106,6 @@ pubKeySingleOutputAt = phoistAcyclic $
     let pkhOutputs = pubKeyOutputsAt # pkh # txInfo
      in getOnlyOneOutputFromList # pkhOutputs
 
--- TODO: move to ext Plutarch.Value
-pPositiveSingleton ::
-  Term
-    s
-    (PCurrencySymbol :--> PTokenName :--> PInteger :--> PValue 'Sorted 'Positive)
-pPositiveSingleton = phoistAcyclic $
-  plam $ \symbol token amount ->
-    pif
-      (0 #<= amount)
-      mempty
-      (punsafeDowncast $ AssocMap.psingleton # symbol #$ AssocMap.psingleton # token # amount)
-
 pubKeyContainsAmountOutput :: Term s (PPubKeyHash :--> PAsData PTxInfo :--> PInteger :--> PBool)
 pubKeyContainsAmountOutput = phoistAcyclic $
   plam $ \pkh txInfo amount ->
@@ -126,8 +115,8 @@ pubKeyContainsAmountOutput = phoistAcyclic $
     matches :: Term s (PInteger :--> PTxOut :--> PBool)
     matches = phoistAcyclic $
       plam $ \amount txOut ->
-        let txOutValue = pfield @"value" # txOut
-            adaAmountValue = pPositiveSingleton # padaSymbol # padaToken # amount
+        let txOutValue = Value.pforgetPositive $ pfield @"value" # txOut
+            adaAmountValue = Value.psingleton # padaSymbol # padaToken # amount
          in txOutValue #== adaAmountValue
 
 getOnlyOneOutputFromList :: Term s (PBuiltinList PTxOut :--> PTxOut)
