@@ -31,6 +31,8 @@
 305: no own inputs
 306: no outputs found in context, expected 1
 307: many outputs found in context, expected 1
+308: Can't get time from infinite lower bound
+309: Can't get time from infinite upper bound
 
 ## Fundraising.Validator
 401: Fundraising datum change not expected while Donating
