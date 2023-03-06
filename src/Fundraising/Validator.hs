@@ -71,7 +71,7 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
         checkNftMinted "414" (-1) threadTokenCS threadTokenName txInfo
         checkIsSignedBy "411" creatorPkh txInfo
         checkManagerReceiveFee managerPkh feePayment txInfo
-        checkFundraisingCompleted deadline raisedFunds desiredFunds txInfo
+        checkFundraisingCompleted validInterval raisedFunds desiredFunds txInfo
         pure $ pconstant ()
 
 checkDonateDatum :: Term s PFundraisingDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
@@ -101,16 +101,14 @@ calculateFees = phoistAcyclic $
      in pmax # (pround # fee) # minTxOut
 
 checkFundraisingCompleted ::
-  Term s (PAsData PPOSIXTime) ->
+  Term s PPOSIXTimeRange ->
   Term s PInteger ->
   Term s PInteger ->
   Term s (PAsData PTxInfo) ->
   TermCont s ()
-checkFundraisingCompleted deadline raisedFunds desiredFunds txInfo = do
+checkFundraisingCompleted afterDeadlineRange raisedFunds desiredFunds txInfo = do
   let txRange = pfield @"validRange" # txInfo
-      calledReceiveFundsAt = pfromData $ getUpperBoundTime # txRange
-      fundrisingInterval = pto # deadline
-      timeClause = pafter # calledReceiveFundsAt # fundrisingInterval
+      timeClause = pcontains # afterDeadlineRange # txRange
       fundsClause = desiredFunds #<= raisedFunds
   pguardC "412" (por' # timeClause # fundsClause)
 

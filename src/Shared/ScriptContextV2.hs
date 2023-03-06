@@ -161,11 +161,3 @@ getLowerBoundTime = phoistAcyclic $
      in pmatch (pfield @"_0" # lowerBound) $ \case
           PFinite finite -> pfield @"_0" # finite
           _ -> ptraceError "308"
-
-getUpperBoundTime :: Term s (PAsData (PInterval PPOSIXTime) :--> PAsData PPOSIXTime)
-getUpperBoundTime = phoistAcyclic $
-  plam $ \interval ->
-    let upperBound = pfield @"to" # interval
-     in pmatch (pfield @"_0" # upperBound) $ \case
-          PFinite finite -> pfield @"_0" # finite
-          _ -> ptraceError "309"
