@@ -106,13 +106,21 @@ checkFundraisingCompleted ::
   Term s PInteger ->
   Term s (PAsData PTxInfo) ->
   TermCont s ()
-checkFundraisingCompleted deadline raisedFunds desiredFunds txInfo = do
+checkFundraisingCompleted deadline raisedFunds desiredFunds txInfo =
+  pmatchC (desiredFunds #<= raisedFunds) >>= \case
+    PTrue -> pure ()
+    PFalse -> checkFundrisingCompletedTime deadline desiredFunds txInfo
+
+checkFundrisingCompletedTime ::
+  Term s (PAsData PPOSIXTime) ->
+  Term s PInteger ->
+  Term s (PAsData PTxInfo) ->
+  TermCont s ()
+checkFundrisingCompletedTime deadline desiredFunds txInfo = do
   let txRange = pfield @"validRange" # txInfo
       calledReceiveFundsAt = pfromData $ getUpperBoundTime # txRange
       fundrisingInterval = pto # deadline
-      timeClause = pafter # calledReceiveFundsAt # fundrisingInterval
-      fundsClause = desiredFunds #<= raisedFunds
-  pguardC "412" (por' # timeClause # fundsClause)
+  pguardC "412" $ pafter # calledReceiveFundsAt # fundrisingInterval
 
 checkDonatedBeforeDeadline :: Term s (PAsData PPOSIXTime) -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkDonatedBeforeDeadline deadline txInfo = do
