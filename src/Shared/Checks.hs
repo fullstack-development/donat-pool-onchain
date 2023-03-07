@@ -43,14 +43,6 @@ checkNftMinted errMsg amount currency tokenName txInfo = do
   pguardC errMsg $ mintingTokenAmount #== amount
   pure ()
 
-checkPkhReceiveScriptValue :: Term s PPubKeyHash -> Term s PInteger -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkPkhReceiveScriptValue pkh expectedValue txOut = do
-  let pkhOutput = pubKeyOutputsAt # pkh # txOut
-      pkhOutputValue = pfield @"value" # pkhOutput
-      minAdaAmount = pvalueOf # pkhOutputValue # padaSymbol # padaToken
-  pguardC "203" $ minAdaAmount #== expectedValue
-  pure ()
-
 checkMintingAmount :: Term s PInteger -> Term s PTokenName -> Term s PScriptContext -> TermCont s ()
 checkMintingAmount amt tn ctx' = do
   ctx <- tcont $ pletFields @'["txInfo", "purpose"] ctx'

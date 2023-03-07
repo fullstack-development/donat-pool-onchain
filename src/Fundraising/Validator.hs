@@ -70,8 +70,8 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
         checkNftMinted "413" (-1) verTokenCS verTokenName txInfo
         checkNftMinted "414" (-1) threadTokenCS threadTokenName txInfo
         checkIsSignedBy "411" creatorPkh txInfo
-        checkPkhReceiveScriptValue managerPkh feePayment txInfo
-        checkFundraisingCompleted validInterval raisedFunds desiredFunds txInfo
+        checkManagerReceiveFee managerPkh feePayment txInfo
+        checkFundraisingCompleted deadline raisedFunds desiredFunds txInfo
         pure $ pconstant ()
 
 checkDonateDatum :: Term s PFundraisingDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
@@ -97,22 +97,30 @@ checkDonateAdaValue maxAmount inputAda outputValue amt = do
 calculateFees :: Term s (PInteger :--> PInteger :--> PInteger)
 calculateFees = phoistAcyclic $
   plam $ \fee' funds' ->
-    let fee = (Rational.pfromInteger # fee') Rational.#/ (Rational.pfromInteger # 100)
-        funds = Rational.pfromInteger # funds'
-        res = fee #* funds
-     in pmax # (pround # res) # minTxOut
+    let fee = (Rational.pfromInteger # (fee' #* funds')) Rational.#/ (Rational.pfromInteger # 100)
+     in pmax # (pround # fee) # minTxOut
 
 checkFundraisingCompleted ::
-  Term s PPOSIXTimeRange ->
+  Term s (PAsData PPOSIXTime) ->
   Term s PInteger ->
   Term s PInteger ->
   Term s (PAsData PTxInfo) ->
   TermCont s ()
-checkFundraisingCompleted afterDeadlineRange raisedFunds desiredFunds txInfo = do
+checkFundraisingCompleted deadline raisedFunds desiredFunds txInfo =
+  pmatchC (desiredFunds #<= raisedFunds) >>= \case
+    PTrue -> pure ()
+    PFalse -> checkFundrisingCompletedTime deadline desiredFunds txInfo
+
+checkFundrisingCompletedTime ::
+  Term s (PAsData PPOSIXTime) ->
+  Term s PInteger ->
+  Term s (PAsData PTxInfo) ->
+  TermCont s ()
+checkFundrisingCompletedTime deadline desiredFunds txInfo = do
   let txRange = pfield @"validRange" # txInfo
-      timeClause = pcontains # afterDeadlineRange # txRange
-      fundsClause = desiredFunds #<= raisedFunds
-  pguardC "412" (por' # timeClause # fundsClause)
+      calledReceiveFundsAt = pfromData $ getUpperBoundTime # txRange
+      fundrisingInterval = pto # deadline
+  pguardC "412" $ pafter # calledReceiveFundsAt # fundrisingInterval
 
 checkDonatedBeforeDeadline :: Term s (PAsData PPOSIXTime) -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkDonatedBeforeDeadline deadline txInfo = do
@@ -121,3 +129,9 @@ checkDonatedBeforeDeadline deadline txInfo = do
   let fundrisingInterval = pto # deadline
   let donatedAfterDeadline = pafter # donatedAt # fundrisingInterval
   pguardC "415" $ pnot # donatedAfterDeadline
+
+checkManagerReceiveFee :: Term s PPubKeyHash -> Term s PInteger -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkManagerReceiveFee managerPkh fee txOut = do
+  let outputsContainFeeOutput = pubKeyContainsAmountOutput # managerPkh # txOut # fee
+  pguardC "203" outputsContainFeeOutput
+  pure ()
