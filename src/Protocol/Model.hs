@@ -14,8 +14,7 @@ data PProtocol (s :: S)
       ( Term
           s
           ( PDataRecord
-              '[ "managerPkh" ':= PPubKeyHash
-               , "protocolCurrency" ':= PCurrencySymbol
+              '[ "protocolCurrency" ':= PCurrencySymbol
                , "protocolTokenName" ':= PTokenName
                ]
           )
@@ -36,8 +35,7 @@ protocolToken :: Term s PProtocol -> Term s PTokenName
 protocolToken protocol = pfield @"protocolTokenName" # protocol
 
 data Protocol = Protocol
-  { managerPkh :: PubKeyHash
-  , protocolCurrency :: CurrencySymbol
+  { protocolCurrency :: CurrencySymbol
   , protocolTokenName :: TokenName
   }
 

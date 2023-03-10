@@ -25,9 +25,9 @@ import Protocol.Redeemer
 
 type SortedPositiveValue = PValue 'Sorted 'Positive
 
-inlineDatumFromOutput :: Term s (PScriptContext :--> PTxOut :--> PData)
+inlineDatumFromOutput :: Term s (PTxOut :--> PData)
 inlineDatumFromOutput = phoistAcyclic $
-  plam $ \ctx scriptTxOut ->
+  plam $ \scriptTxOut ->
     pmatch (pfield @"datum" # scriptTxOut) $ \case
       PNoOutputDatum _ -> ptraceError "301"
       POutputDatumHash _ -> ptraceError "302"
@@ -135,6 +135,31 @@ getAllTxInputs = phoistAcyclic $
     let txInfo = pfield @"txInfo" # ctx
         inputs = pfield @"inputs" # txInfo
      in List.pmap # plam (\txIn -> pfield @"resolved" # txIn) # inputs
+
+getAllRefInputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
+getAllRefInputs = phoistAcyclic $
+  plam $ \ctx ->
+    let txInfo = pfield @"txInfo" # ctx
+        inputs = pfield @"referenceInputs" # txInfo
+     in List.pmap # plam (\txIn -> pfield @"resolved" # txIn) # inputs
+
+outputContainsToken :: Term s (PCurrencySymbol :--> PTokenName :--> PTxOut :--> PBool)
+outputContainsToken = phoistAcyclic $
+  plam $ \cs tn txOut ->
+    let inputValue = pfield @"value" # txOut
+     in pvalueOf # inputValue # cs # tn #== 1
+
+getOnlyOneRefInputByToken :: Term s (PCurrencySymbol :--> PTokenName :--> PScriptContext :--> PTxOut)
+getOnlyOneRefInputByToken = phoistAcyclic $
+  plam $ \cs tn ctx ->
+    let refInputs = getAllRefInputs # ctx
+        inputsWithToken = pfilter # (outputContainsToken # cs # tn) # refInputs
+     in pmatch inputsWithToken $ \case
+          PNil -> ptraceError "310"
+          PCons scriptTxOut rest -> do
+            pmatch rest $ \case
+              PNil -> scriptTxOut
+              _ -> ptraceError "311"
 
 getAllTxOutputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
 getAllTxOutputs = phoistAcyclic $
