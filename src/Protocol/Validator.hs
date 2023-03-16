@@ -41,7 +41,7 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
   let protocolOutput = getOnlyOneOwnOutput # ctx
   pmatch red $ \case
     PUpdateProtocolConfig redData -> popaque . unTermCont $ do
-      checkSignedByManager protocol ctx
+      checkSignedByManager dat ctx
       checkUpdateProtocolOutput protocol dat ctx
       pure $ pconstant ()
     PStartFundrise redData -> popaque . unTermCont $ do
@@ -59,10 +59,10 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
       checkNftBurned protocol txInfo
       pure $ pconstant ()
 
-checkSignedByManager :: Term s PProtocol -> Term s PScriptContext -> TermCont s ()
-checkSignedByManager protocol ctx' = do
+checkSignedByManager :: Term s PProtocolDatum -> Term s PScriptContext -> TermCont s ()
+checkSignedByManager datum ctx' = do
   let txInfo = getCtxInfoForSpending # ctx'
-  let managerPkh = pfield @"managerPkh" # protocol
+  let managerPkh = pfield @"managerPkh" # datum
   checkIsSignedBy "111" managerPkh txInfo
 
 checkUpdateProtocolOutput :: Term s PProtocol -> Term s PProtocolDatum -> Term s PScriptContext -> TermCont s ()
@@ -74,7 +74,7 @@ checkUpdateProtocolOutput protocol inDatum ctx = do
 
 checkUpdateProtocolDatum :: Term s PProtocolDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkUpdateProtocolDatum inDatum ctx txOut = do
-  let outDatum' = inlineDatumFromOutput # ctx # txOut
+  let outDatum' = inlineDatumFromOutput # txOut
   (outDatum, _) <- ptryFromC @PProtocolDatum outDatum'
   pguardC "112" (pfield @"managerPkh" # inDatum #== pfield @"managerPkh" # outDatum)
   pguardC "113" (pfield @"tokenOriginRef" # inDatum #== pfield @"tokenOriginRef" # outDatum)
@@ -95,7 +95,7 @@ checkNftBurned protocol = checkNftMinted "123" (-1) (protocolSymbol protocol) (p
 
 checkProtocolDatumNotChanged :: Term s PProtocolDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkProtocolDatumNotChanged inDatum ctx txOut = do
-  let outDatum' = inlineDatumFromOutput # ctx # txOut
+  let outDatum' = inlineDatumFromOutput # txOut
   (outDatum, _) <- ptryFromC @PProtocolDatum outDatum'
   pguardC "117" (inDatum #== outDatum)
   pure ()
@@ -112,7 +112,7 @@ checkFundriseOutputDatum ::
   Term s PScriptContext ->
   TermCont s ()
 checkFundriseOutputDatum protocolDatum frConfig frTxOut ctx = do
-  let frOutDatum' = inlineDatumFromOutput # ctx # frTxOut
+  let frOutDatum' = inlineDatumFromOutput # frTxOut
   (frOutDatum, _) <- ptryFromC @PFundraisingDatum frOutDatum'
   pguardC "118" (pfield @"frFee" # frOutDatum #== pfield @"protocolFee" # protocolDatum)
 

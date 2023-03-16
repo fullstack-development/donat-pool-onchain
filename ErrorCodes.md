@@ -33,6 +33,8 @@
 307: many outputs found in context, expected 1
 308: Can't get time from infinite lower bound
 309: Can't get time from infinite upper bound
+310: No reference inputs with current threadToken found
+311: More than one reference inputs with current threadToken found
 
 ## Fundraising.Validator
 401: Fundraising datum change not expected while Donating

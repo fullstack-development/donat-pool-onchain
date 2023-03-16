@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedRecordDot #-}
+
 module Fundraising.Validator where
 
 import Ext.Plutarch.Extra.ApiV2
@@ -22,6 +24,7 @@ import qualified PlutusCore as PLC
 import Protocol.Model
 import Shared.Checks
 import Shared.ScriptContextV2
+import Protocol.Datum
 
 -- NOTE: `donate` and `close` endpoints (off-chain) must be provided with
 -- mustValidateIn constraint to pass valid time range
@@ -39,6 +42,7 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
       txInfo = getCtxInfoForSpending # ctx
       deadline = pfield @"frDeadline" # dat
       desiredFunds = pfield @"frAmount" # dat
+  protocolToken <- pletFields @["protocolCurrency","protocolTokenName"] (pfield @"protocol" # fundraising)
   pmatch red $ \case
     PDonate redData -> popaque $
       unTermCont $ do
@@ -60,10 +64,12 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
             raisedFunds = inputAda #- minTxOut
             feePayment = calculateFees # fees # raisedFunds
             protocol = pfield @"protocol" # fundraising
-            managerPkh = pfield @"managerPkh" # protocol
             validInterval = pfrom # deadline
             threadTokenCS = pfield @"_0" # redData
             threadTokenName = pfield @"_1" # redData
+        protocolRefInput <- pletC $ getOnlyOneRefInputByToken # protocolToken.protocolCurrency # protocolToken.protocolTokenName # ctx
+        (protocolDatum, _) <- ptryFromC @PProtocolDatum (inlineDatumFromOutput # protocolRefInput)
+        managerPkh <- pletC $ pfield @"managerPkh" # protocolDatum
         checkNftIsInValue "409" verTokenCS verTokenName inputValue
         checkNftIsInValue "410" threadTokenCS threadTokenName inputValue
         checkNoOutputs ctx
@@ -76,7 +82,7 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
 
 checkDonateDatum :: Term s PFundraisingDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkDonateDatum inputDatum ctx output = do
-  let outputDatum' = inlineDatumFromOutput # ctx # output
+  let outputDatum' = inlineDatumFromOutput # output
   (outputDatum, _) <- ptryFromC @PFundraisingDatum outputDatum'
   pguardC "401" (inputDatum #== outputDatum)
   pure ()
