@@ -16,6 +16,7 @@ data PFundraisingDatum (s :: S)
                , "frAmount" ':= PInteger
                , "frDeadline" ':= PPOSIXTime
                , "frFee" ':= PInteger
+               , "managerPkh" ':= PPubKeyHash
                ]
           )
       )

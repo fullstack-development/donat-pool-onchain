@@ -126,6 +126,10 @@ checkFundriseOutputDatum protocolDatum frConfig frTxOut ctx = do
   let minDurationDays = pfromData $ pfield @"minDuration" # protocolDatum
   let maxDurationDays = pfromData $ pfield @"maxDuration" # protocolDatum
   checkPermittedDuration minDurationDays maxDurationDays frStartedAt frDeadline
+
+  prManager <- pletC $ pfield @"managerPkh" # protocolDatum
+  frManager <- pletC $ pfield @"managerPkh" # frOutDatum
+  pguardC "127" (prManager #== frManager)
   pure ()
 
 checkFundriseOutputValue :: Term s PFundriseConfig -> Term s PTxOut -> TermCont s ()
