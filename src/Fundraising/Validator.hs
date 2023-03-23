@@ -61,15 +61,13 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
       unTermCont $ do
         let creatorPkh = pfield @"creatorPkh" # dat
             fees = pfield @"frFee" # dat
-            raisedFunds = inputAda #- minTxOut
+            raisedFunds = inputAda #- minTxOut #- minTxOut
             feePayment = calculateFees # fees # raisedFunds
             protocol = pfield @"protocol" # fundraising
             validInterval = pfrom # deadline
             threadTokenCS = pfield @"_0" # redData
             threadTokenName = pfield @"_1" # redData
-        protocolRefInput <- pletC $ getOnlyOneRefInputByToken # protocolToken.protocolCurrency # protocolToken.protocolTokenName # ctx
-        (protocolDatum, _) <- ptryFromC @PProtocolDatum (inlineDatumFromOutput # protocolRefInput)
-        managerPkh <- pletC $ pfield @"managerPkh" # protocolDatum
+            managerPkh = pfield @"managerPkh" # dat
         checkNftIsInValue "409" verTokenCS verTokenName inputValue
         checkNftIsInValue "410" threadTokenCS threadTokenName inputValue
         checkNoOutputs ctx

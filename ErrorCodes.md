@@ -6,15 +6,16 @@
 115: protocol value shouldn't be changed
 116: protocol thread token isn't in value
 117: protocol datum shouldn't be changed
-118: wrong fee on start fundrising
-119: fundrising goal is out of amount range
-120: VerToken is not in fundrising output
-121: ThreadToken is not in fundrising output
-122: should be minAda in fundrising output
+118: wrong fee on start fundraising
+119: fundraising goal is out of amount range
+120: VerToken is not in fundraising output
+121: ThreadToken is not in fundraising output
+122: should be minAda in fundraising output
 123: should burn 1 thread token on close protocol
-124: should mint verToken on start fundrising
-125: should mint threadToken on start fundrising
+124: should mint verToken on start fundraising
+125: should mint threadToken on start fundraising
 126: fundraising duration is out of configured in protocol range
+127: Unexpected managerPkh in output Fundraising Datum while starting fundraising
 
 ## Shared.Checks
 201: 1 or more outputs found in context, expected 0

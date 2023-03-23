@@ -16,6 +16,7 @@ import Plutarch.DataRepr
 import Plutarch.Extra.Interval
 import Plutarch.Extra.TermCont
 import qualified Plutarch.Monadic as P
+import Plutarch.Num ((#+))
 import Plutarch.Prelude
 import PlutusCore (Closed)
 import qualified PlutusCore as PLC
@@ -126,6 +127,10 @@ checkFundriseOutputDatum protocolDatum frConfig frTxOut ctx = do
   let minDurationDays = pfromData $ pfield @"minDuration" # protocolDatum
   let maxDurationDays = pfromData $ pfield @"maxDuration" # protocolDatum
   checkPermittedDuration minDurationDays maxDurationDays frStartedAt frDeadline
+
+  prManager <- pletC $ pfield @"managerPkh" # protocolDatum
+  frManager <- pletC $ pfield @"managerPkh" # frOutDatum
+  pguardC "127" (prManager #== frManager)
   pure ()
 
 checkFundriseOutputValue :: Term s PFundriseConfig -> Term s PTxOut -> TermCont s ()
@@ -134,4 +139,4 @@ checkFundriseOutputValue frConfig frTxOut = do
   let adaAmount = plovelaceValueOf # value
   checkNftIsInValue "120" (pfield @"verCurrencySymbol" # frConfig) (pfield @"verTokenName" # frConfig) value
   checkNftIsInValue "121" (pfield @"threadCurrencySymbol" # frConfig) (pfield @"threadTokenName" # frConfig) value
-  pguardC "122" (adaAmount #== minTxOut)
+  pguardC "122" (adaAmount #== minTxOut #+ minTxOut)
