@@ -124,9 +124,9 @@ checkFundriseOutputDatum protocolDatum frConfig frTxOut ctx = do
 
   let frStartedAt = pfield @"startedAt" # frConfig
   let frDeadline = pfield @"frDeadline" # frOutDatum
-  let minDurationDays = pfromData $ pfield @"minDuration" # protocolDatum
-  let maxDurationDays = pfromData $ pfield @"maxDuration" # protocolDatum
-  checkPermittedDuration minDurationDays maxDurationDays frStartedAt frDeadline
+  let minDurationMinutes = pfromData $ pfield @"minDuration" # protocolDatum
+  let maxDurationMinutes = pfromData $ pfield @"maxDuration" # protocolDatum
+  checkPermittedDuration minDurationMinutes maxDurationMinutes frStartedAt frDeadline
 
   prManager <- pletC $ pfield @"managerPkh" # protocolDatum
   frManager <- pletC $ pfield @"managerPkh" # frOutDatum

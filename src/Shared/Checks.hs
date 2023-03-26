@@ -91,8 +91,8 @@ checkPermittedDuration ::
   Term s (PAsData PPOSIXTime) ->
   Term s (PAsData PPOSIXTime) ->
   TermCont s ()
-checkPermittedDuration minDurationDays maxDurationDays startedAt deadline = do
-  let minDuration = daysToPosixDuration # minDurationDays # startedAt
-  let maxDuration = daysToPosixDuration # maxDurationDays # startedAt
+checkPermittedDuration minDurationMinutes maxDurationMinutes startedAt deadline = do
+  let minDuration = minutesToPosixDuration # minDurationMinutes # startedAt
+  let maxDuration = minutesToPosixDuration # maxDurationMinutes # startedAt
   let permittedDuration = pinterval # minDuration # maxDuration
   pguardC "126" (pmember # deadline # permittedDuration)

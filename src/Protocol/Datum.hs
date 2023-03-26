@@ -14,8 +14,8 @@ data PProtocolDatum (s :: S)
           ( PDataRecord
               '[ "minAmount" ':= PInteger
                , "maxAmount" ':= PInteger
-               , "minDuration" ':= PInteger -- min duration in days
-               , "maxDuration" ':= PInteger -- max duration in days
+               , "minDuration" ':= PInteger -- min duration in minutes
+               , "maxDuration" ':= PInteger -- max duration in minutes
                , "protocolFee" ':= PInteger
                , "managerPkh" ':= PPubKeyHash
                , "tokenOriginRef" ':= PTxOutRef

@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedRecordDot #-}
-
 module Fundraising.Validator where
 
 import Ext.Plutarch.Extra.ApiV2
@@ -21,10 +19,10 @@ import Plutarch.Prelude hiding (pto)
 import qualified Plutarch.Rational as Rational
 import PlutusCore (Closed)
 import qualified PlutusCore as PLC
+import Protocol.Datum
 import Protocol.Model
 import Shared.Checks
 import Shared.ScriptContextV2
-import Protocol.Datum
 
 -- NOTE: `donate` and `close` endpoints (off-chain) must be provided with
 -- mustValidateIn constraint to pass valid time range
@@ -42,7 +40,7 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
       txInfo = getCtxInfoForSpending # ctx
       deadline = pfield @"frDeadline" # dat
       desiredFunds = pfield @"frAmount" # dat
-  protocolToken <- pletFields @["protocolCurrency","protocolTokenName"] (pfield @"protocol" # fundraising)
+  protocolToken <- pletFields @["protocolCurrency", "protocolTokenName"] (pfield @"protocol" # fundraising)
   pmatch red $ \case
     PDonate redData -> popaque $
       unTermCont $ do
@@ -122,7 +120,7 @@ checkFundrisingCompletedTime ::
   TermCont s ()
 checkFundrisingCompletedTime deadline desiredFunds txInfo = do
   let txRange = pfield @"validRange" # txInfo
-      calledReceiveFundsAt = pfromData $ getUpperBoundTime # txRange
+      calledReceiveFundsAt = pfromData $ getLowerBoundTime # txRange
       fundrisingInterval = pto # deadline
   pguardC "412" $ pafter # calledReceiveFundsAt # fundrisingInterval
 
