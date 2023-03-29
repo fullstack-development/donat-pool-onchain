@@ -4,9 +4,9 @@ import Plutarch.Api.V1.Time
 import Plutarch.Num ((#*), (#+))
 import Plutarch.Prelude
 
-daysToMilliseconds :: Term s (PInteger :--> PInteger)
-daysToMilliseconds = phoistAcyclic $
-  plam $ \days -> days #* 24 #* 60 #* 60 #* 1000
+minutesToMilliseconds :: Term s (PInteger :--> PInteger)
+minutesToMilliseconds = phoistAcyclic $
+  plam $ \minutes -> minutes #* 60 #* 1000
 
 addTimes :: Term s (PAsData PPOSIXTime :--> PAsData PPOSIXTime :--> PAsData PPOSIXTime)
 addTimes = phoistAcyclic $
@@ -15,9 +15,9 @@ addTimes = phoistAcyclic $
 toPosixTime :: Term s (PInteger :--> PPOSIXTime)
 toPosixTime = phoistAcyclic $ plam $ \milliSeconds -> pcon $ PPOSIXTime milliSeconds
 
-daysToPosixDuration :: Term s (PInteger :--> PAsData PPOSIXTime :--> PAsData PPOSIXTime)
-daysToPosixDuration = phoistAcyclic $
-  plam $ \durationDays startedAt ->
-    let durationMs = daysToMilliseconds # durationDays
+minutesToPosixDuration :: Term s (PInteger :--> PAsData PPOSIXTime :--> PAsData PPOSIXTime)
+minutesToPosixDuration = phoistAcyclic $
+  plam $ \durationMinutes startedAt ->
+    let durationMs = minutesToMilliseconds # durationMinutes
         durationPosix = toPosixTime # durationMs
      in addTimes # startedAt # pdata durationPosix
