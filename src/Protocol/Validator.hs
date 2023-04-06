@@ -1,4 +1,5 @@
 {-# LANGUAGE QualifiedDo #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
 module Protocol.Validator where
 
@@ -6,12 +7,13 @@ import Ext.Plutarch.Extra.ApiV2
 import Ext.Plutarch.Extra.Time
 import Ext.Plutus.MinAda
 import Fundraising.Datum
-import Fundraising.Model (Fundraising (Fundraising))
+import Fundraising.Model (byteStringSize)
 import Generics.SOP
 import Plutarch.Api.V1.Value
 import Plutarch.Api.V2
 import Plutarch.Bool
 import Plutarch.Builtin
+import Plutarch.ByteString
 import Plutarch.DataRepr
 import Plutarch.Extra.Interval
 import Plutarch.Extra.TermCont
@@ -29,40 +31,43 @@ import Shared.ScriptContextV2
 -- TODO: Add config values validation for updateProtocol
 -- validate config values:
 -- -- minPoolSize >= minAdaTxOutAmount
--- -- maxPoolSize ?
+-- -- maxPoolSize > minPoolSize
 -- -- minDuration >= 1 day
--- -- maxDuration <= 90 days
+-- -- maxDuration < minDuration
 -- -- fee > 0 and < 100 %
 
 protocolValidator :: ClosedTerm (PProtocol :--> PValidator)
 protocolValidator = plam $ \protocol datm redm ctx -> P.do
   (dat, _) <- ptryFrom @PProtocolDatum datm
   (red, _) <- ptryFrom @PProtocolRedeemer redm
-  let txInfo = getCtxInfoForSpending # ctx
-  let protocolOutput = getOnlyOneOwnOutput # ctx
+  txInfo <- plet $ getCtxInfoForSpending # ctx
   pmatch red $ \case
     PUpdateProtocolConfig redData -> popaque . unTermCont $ do
-      checkSignedByManager dat ctx
+      checkSignedByManager dat txInfo
       checkUpdateProtocolOutput protocol dat ctx
       pure $ pconstant ()
     PStartFundrise redData -> popaque . unTermCont $ do
-      let fundriseConfig = pfield @"_0" # redData
-      let fundriseAddress = pfield @"scriptAddress" # fundriseConfig
-      let fundriseOutput = getOutputByAddress # ctx # fundriseAddress
+      protocolOutput <- pletC $ getOnlyOneOwnOutput # ctx
+      fundriseConfig <- pletC $ pfield @"_0" # redData
+      fundriseAddress <- pletC $ pfield @"scriptAddress" # fundriseConfig
+      fundriseOutput <- pletC $ getOutputByAddress # ctx # fundriseAddress
+      frOutDatum' <- pletC $ inlineDatumFromOutput # fundriseOutput
+      (frOutDatum, _) <- ptryFromC @PFundraisingDatum frOutDatum'
       checkProtocolValueNotChanged protocol ctx protocolOutput
       checkProtocolDatumNotChanged dat ctx protocolOutput
       checkFrTokensMinted fundriseConfig txInfo
-      checkFundriseOutputDatum dat fundriseConfig fundriseOutput ctx
+      checkFundriseOutputDatum dat fundriseConfig frOutDatum
       checkFundriseOutputValue fundriseConfig fundriseOutput
+      checkIsSignedBy "131" (pfield @"creatorPkh" # frOutDatum) txInfo
       pure $ pconstant ()
     PCloseProtocol _ -> popaque . unTermCont $ do
       checkNoOutputs ctx
       checkNftBurned protocol txInfo
+      checkSignedByManager dat txInfo
       pure $ pconstant ()
 
-checkSignedByManager :: Term s PProtocolDatum -> Term s PScriptContext -> TermCont s ()
-checkSignedByManager datum ctx' = do
-  let txInfo = getCtxInfoForSpending # ctx'
+checkSignedByManager :: Term s PProtocolDatum -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkSignedByManager datum txInfo = do
   let managerPkh = pfield @"managerPkh" # datum
   checkIsSignedBy "111" managerPkh txInfo
 
@@ -71,7 +76,6 @@ checkUpdateProtocolOutput protocol inDatum ctx = do
   let output = getOnlyOneOwnOutput # ctx
   checkUpdateProtocolDatum inDatum ctx output
   checkProtocolValueNotChanged protocol ctx output
-  pure ()
 
 checkUpdateProtocolDatum :: Term s PProtocolDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkUpdateProtocolDatum inDatum ctx txOut = do
@@ -80,7 +84,6 @@ checkUpdateProtocolDatum inDatum ctx txOut = do
   pguardC "112" (pfield @"managerPkh" # inDatum #== pfield @"managerPkh" # outDatum)
   pguardC "113" (pfield @"tokenOriginRef" # inDatum #== pfield @"tokenOriginRef" # outDatum)
   pguardC "114" (pnot #$ inDatum #== outDatum)
-  pure ()
 
 checkProtocolValueNotChanged :: Term s PProtocol -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
 checkProtocolValueNotChanged protocol ctx txOut = do
@@ -89,7 +92,6 @@ checkProtocolValueNotChanged protocol ctx txOut = do
   pguardC "115" (inValue #== outValue)
   let threadTokenAmount = pvalueOf # outValue # protocolSymbol protocol # protocolToken protocol
   pguardC "116" (threadTokenAmount #== 1)
-  pure ()
 
 checkNftBurned :: Term s PProtocol -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkNftBurned protocol = checkNftMinted "123" (-1) (protocolSymbol protocol) (protocolToken protocol)
@@ -99,7 +101,6 @@ checkProtocolDatumNotChanged inDatum ctx txOut = do
   let outDatum' = inlineDatumFromOutput # txOut
   (outDatum, _) <- ptryFromC @PProtocolDatum outDatum'
   pguardC "117" (inDatum #== outDatum)
-  pure ()
 
 checkFrTokensMinted :: Term s PFundriseConfig -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkFrTokensMinted frConfig = do
@@ -109,29 +110,23 @@ checkFrTokensMinted frConfig = do
 checkFundriseOutputDatum ::
   Term s PProtocolDatum ->
   Term s PFundriseConfig ->
-  Term s PTxOut ->
-  Term s PScriptContext ->
+  Term s PFundraisingDatum ->
   TermCont s ()
-checkFundriseOutputDatum protocolDatum frConfig frTxOut ctx = do
-  let frOutDatum' = inlineDatumFromOutput # frTxOut
-  (frOutDatum, _) <- ptryFromC @PFundraisingDatum frOutDatum'
-  pguardC "118" (pfield @"frFee" # frOutDatum #== pfield @"protocolFee" # protocolDatum)
+checkFundriseOutputDatum pDatum frConfig frOutDatum = do
+  frDatum <- pletFieldsC @["frDesc", "frAmount", "frDeadline", "managerPkh", "frUrl"] frOutDatum
+  startedAt <- pletC $ pfield @"startedAt" # frConfig
+  protocolDatum <- pletFieldsC @["minAmount", "maxAmount", "minDuration", "maxDuration", "managerPkh", "protocolFee"] pDatum
 
-  let minAmount = pfromData $ pfield @"minAmount" # protocolDatum
-  let maxAmount = pfromData $ pfield @"maxAmount" # protocolDatum
-  let frAmount = pfromData $ pfield @"frAmount" # frOutDatum
-  pguardC "119" (minAmount #<= frAmount #&& frAmount #<= maxAmount)
-
-  let frStartedAt = pfield @"startedAt" # frConfig
-  let frDeadline = pfield @"frDeadline" # frOutDatum
-  let minDurationMinutes = pfromData $ pfield @"minDuration" # protocolDatum
-  let maxDurationMinutes = pfromData $ pfield @"maxDuration" # protocolDatum
-  checkPermittedDuration minDurationMinutes maxDurationMinutes frStartedAt frDeadline
-
-  prManager <- pletC $ pfield @"managerPkh" # protocolDatum
-  frManager <- pletC $ pfield @"managerPkh" # frOutDatum
-  pguardC "127" (prManager #== frManager)
-  pure ()
+  pguardC "118" (pfield @"frFee" # frOutDatum #== protocolDatum.protocolFee)
+  pguardC
+    "119"
+    ( pfromData protocolDatum.minAmount #<= pfromData frDatum.frAmount
+        #&& pfromData frDatum.frAmount #<= pfromData protocolDatum.maxAmount
+    )
+  checkPermittedDuration protocolDatum.minDuration protocolDatum.maxDuration startedAt frDatum.frDeadline
+  pguardC "127" (protocolDatum.managerPkh #== frDatum.managerPkh)
+  pguardC "128" (plengthBS # (pfromData frDatum.frUrl) #<= byteStringSize)
+  pguardC "129" (plengthBS # (pfromData frDatum.frDesc) #<= byteStringSize)
 
 checkFundriseOutputValue :: Term s PFundriseConfig -> Term s PTxOut -> TermCont s ()
 checkFundriseOutputValue frConfig frTxOut = do

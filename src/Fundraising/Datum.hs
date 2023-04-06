@@ -12,10 +12,11 @@ data PFundraisingDatum (s :: S)
           ( PDataRecord
               '[ "creatorPkh" ':= PPubKeyHash
                , "tokenOrigin" ':= PTxOutRef
-               , "frDesc" ':= PByteString
+               , "frDesc" ':= PByteString -- 35 symbols max
                , "frAmount" ':= PInteger
                , "frDeadline" ':= PPOSIXTime
                , "frFee" ':= PInteger
+               , "frUrl" ':= PByteString -- 35 symbols max
                , "managerPkh" ':= PPubKeyHash
                ]
           )

@@ -9,6 +9,9 @@ import PlutusLedgerApi.V1 (CurrencySymbol, PubKeyHash, TokenName)
 import Ply.Plutarch.Class
 import Protocol.Model
 
+byteStringSize :: Term s PInteger
+byteStringSize = pconstant 35
+
 data PFundraising (s :: S)
   = PFundraising
       ( Term

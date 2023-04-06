@@ -16,6 +16,8 @@
 125: should mint threadToken on start fundraising
 126: fundraising duration is out of configured in protocol range
 127: Unexpected managerPkh in output Fundraising Datum while starting fundraising
+128: Fundraising page URL length must be shorter or equal to 35
+129: Fundraising description length must be shorter or equal to 35
 
 ## Shared.Checks
 201: 1 or more outputs found in context, expected 0
