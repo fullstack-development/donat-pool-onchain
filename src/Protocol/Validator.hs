@@ -33,7 +33,7 @@ import Shared.ScriptContextV2
 -- -- minPoolSize >= minAdaTxOutAmount
 -- -- maxPoolSize > minPoolSize
 -- -- minDuration >= 1 day
--- -- maxDuration < minDuration
+-- -- maxDuration > minDuration
 -- -- fee > 0 and < 100 %
 
 protocolValidator :: ClosedTerm (PProtocol :--> PValidator)
