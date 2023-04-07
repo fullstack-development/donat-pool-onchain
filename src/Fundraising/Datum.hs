@@ -5,6 +5,9 @@ import Plutarch.Api.V1
 import Plutarch.DataRepr
 import Plutarch.Prelude
 
+descStringSize :: Term s PInteger
+descStringSize = pconstant 35
+
 data PFundraisingDatum (s :: S)
   = PFundraisingDatum
       ( Term
@@ -12,7 +15,7 @@ data PFundraisingDatum (s :: S)
           ( PDataRecord
               '[ "creatorPkh" ':= PPubKeyHash
                , "tokenOrigin" ':= PTxOutRef
-               , "frDesc" ':= PByteString
+               , "frDesc" ':= PByteString -- description length is limited by descStringSize
                , "frAmount" ':= PInteger
                , "frDeadline" ':= PPOSIXTime
                , "frFee" ':= PInteger

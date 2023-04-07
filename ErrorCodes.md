@@ -14,8 +14,15 @@
 123: should burn 1 thread token on close protocol
 124: should mint verToken on start fundraising
 125: should mint threadToken on start fundraising
-126: fundraising duration is out of configured in protocol range
+126: fundraising duration is out of the range configured in protocol
 127: Unexpected managerPkh in output Fundraising Datum while starting fundraising
+128: MinPoolAmount must be greater then minimal txOut amount
+129: MinPoolAmount must be less than MaxPoolAmount
+130: Minimal duration must be greater than 1 minute
+131: Minimal duration must be less than maximal duration
+132: Protocol fee value must be between 0 and 100 
+133: Fundraising description length must be shorter or equal to 35
+134: Create Fundraising transaction not signed by creator
 
 ## Shared.Checks
 201: 1 or more outputs found in context, expected 0
