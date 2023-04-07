@@ -1,7 +1,7 @@
 module Fundraising.Datum where
 
 import qualified GHC.Generics as GHC
-import Plutarch.Api.V1
+import Plutarch.Api.V2
 import Plutarch.DataRepr
 import Plutarch.Prelude
 

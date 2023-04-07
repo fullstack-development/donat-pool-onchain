@@ -2,10 +2,7 @@ module MintingPolicy.VerToken (verTokenPolicy) where
 
 import qualified GHC.Generics as GHC
 import Generics.SOP
-import qualified Plutarch.Api.V1.Value as PValue
 import Plutarch.Api.V2
-import Plutarch.Builtin
-import Plutarch.DataRepr
 import Plutarch.Extra.TermCont (pguardC)
 import qualified Plutarch.Monadic as P
 import Plutarch.Prelude hiding (Generic)

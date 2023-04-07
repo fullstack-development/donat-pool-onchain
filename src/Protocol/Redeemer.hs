@@ -1,7 +1,5 @@
 module Protocol.Redeemer where
 
-import qualified GHC.Generics as GHC
-import Plutarch.Api.V1 (PCurrencySymbol)
 import Plutarch.DataRepr
 import Plutarch.Prelude
 import Protocol.Datum

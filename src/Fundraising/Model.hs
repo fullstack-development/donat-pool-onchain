@@ -1,11 +1,10 @@
 module Fundraising.Model where
 
-import Data.Typeable
 import qualified GHC.Generics as GHC
-import Plutarch.Api.V1
+import Plutarch.Api.V2
 import Plutarch.DataRepr
 import Plutarch.Prelude
-import PlutusLedgerApi.V1 (CurrencySymbol, PubKeyHash, TokenName)
+import PlutusLedgerApi.V2 (CurrencySymbol, PubKeyHash, TokenName)
 import Ply.Plutarch.Class
 import Protocol.Model
 

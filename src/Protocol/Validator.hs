@@ -2,24 +2,14 @@
 
 module Protocol.Validator where
 
-import Ext.Plutarch.Extra.ApiV2
-import Ext.Plutarch.Extra.Time
 import Ext.Plutus.MinAda
 import Fundraising.Datum
-import Fundraising.Model (Fundraising (Fundraising))
-import Generics.SOP
 import Plutarch.Api.V1.Value
 import Plutarch.Api.V2
-import Plutarch.Bool
-import Plutarch.Builtin
-import Plutarch.DataRepr
-import Plutarch.Extra.Interval
 import Plutarch.Extra.TermCont
 import qualified Plutarch.Monadic as P
 import Plutarch.Num ((#+))
 import Plutarch.Prelude
-import PlutusCore (Closed)
-import qualified PlutusCore as PLC
 import Protocol.Datum
 import Protocol.Model
 import Protocol.Redeemer

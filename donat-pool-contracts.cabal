@@ -105,8 +105,6 @@ library
     Protocol.Validator
     Shared.Checks
     Shared.ScriptContextV2
-    Validator.AlwaysSucceeds
-    Validator.TestValidator
 
 executable compile
   import:         common-lang

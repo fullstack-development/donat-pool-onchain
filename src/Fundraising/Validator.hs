@@ -7,20 +7,14 @@ import Ext.Plutus.MinAda
 import Fundraising.Datum
 import Fundraising.Model
 import Fundraising.Redeemer
-import Generics.SOP
 import Plutarch.Api.V1.Value
 import Plutarch.Api.V2
-import Plutarch.Bool (por')
-import Plutarch.Builtin
-import Plutarch.DataRepr
 import Plutarch.Extra.Interval
 import Plutarch.Extra.TermCont
 import qualified Plutarch.Monadic as P
 import Plutarch.Num ((#*), (#+), (#-))
 import Plutarch.Prelude hiding (pto)
 import qualified Plutarch.Rational as Rational
-import PlutusCore (Closed)
-import qualified PlutusCore as PLC
 import Protocol.Datum
 import Protocol.Model
 import Shared.Checks
