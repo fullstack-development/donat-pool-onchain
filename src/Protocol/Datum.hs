@@ -16,7 +16,7 @@ data PProtocolDatum (s :: S)
                , "maxAmount" ':= PInteger
                , "minDuration" ':= PInteger -- min duration in minutes
                , "maxDuration" ':= PInteger -- max duration in minutes
-               , "protocolFee" ':= PInteger
+               , "protocolFee" ':= PInteger -- percentage
                , "managerPkh" ':= PPubKeyHash
                , "tokenOriginRef" ':= PTxOutRef
                ]

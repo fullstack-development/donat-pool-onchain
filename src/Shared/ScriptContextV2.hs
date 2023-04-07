@@ -1,27 +1,13 @@
-{-# LANGUAGE QualifiedDo #-}
-
 module Shared.ScriptContextV2 where
 
 import Ext.Plutarch.Extra.ApiV2
-import Generics.SOP
 import Plutarch.Api.V1.Address
-import qualified Plutarch.Api.V1.AssocMap as AssocMap
 import Plutarch.Api.V1.Value
 import qualified Plutarch.Api.V1.Value as Value
 import Plutarch.Api.V2
-import Plutarch.Builtin
-import Plutarch.DataRepr
 import Plutarch.Extra.Maybe
-import Plutarch.Extra.TermCont
 import qualified Plutarch.List as List
-import qualified Plutarch.Monadic as P
 import Plutarch.Prelude hiding (psingleton)
-import Plutarch.Unsafe (punsafeCoerce, punsafeDowncast)
-import PlutusCore (Closed)
-import qualified PlutusCore as PLC
-import PlutusLedgerApi.V2 (PubKeyHash, TxOut)
-import Protocol.Datum
-import Protocol.Redeemer
 
 type SortedPositiveValue = PValue 'Sorted 'Positive
 

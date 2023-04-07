@@ -2,25 +2,13 @@
 
 module Shared.Checks where
 
-import Ext.Plutarch.Extra.ApiV2
 import Ext.Plutarch.Extra.Time
-import Generics.SOP
-import Plutarch.Api.V1.Address
 import Plutarch.Api.V1.Value
 import Plutarch.Api.V2
-import Plutarch.Builtin
-import Plutarch.DataRepr
 import Plutarch.Extra.Interval
-import Plutarch.Extra.Maybe
 import Plutarch.Extra.TermCont
 import qualified Plutarch.List as List
-import qualified Plutarch.Monadic as P
 import Plutarch.Prelude
-import PlutusCore (Closed)
-import qualified PlutusCore as PLC
-import PlutusLedgerApi.V2 (PubKeyHash, TxOut)
-import Protocol.Datum
-import Protocol.Redeemer
 import Shared.ScriptContextV2
 
 checkNoOutputs :: Term s PScriptContext -> TermCont s (Term s PUnit)
