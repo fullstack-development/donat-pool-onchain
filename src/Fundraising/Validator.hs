@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedRecordDot #-}
+
 module Fundraising.Validator where
 
 import Ext.Plutarch.Extra.ApiV2
@@ -24,64 +26,49 @@ import Protocol.Model
 import Shared.Checks
 import Shared.ScriptContextV2
 
--- NOTE: `donate` and `close` endpoints (off-chain) must be provided with
--- mustValidateIn constraint to pass valid time range
-
 fundraisingValidator :: ClosedTerm (PFundraising :--> PValidator)
 fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
   (dat, _) <- ptryFrom @PFundraisingDatum datm
   (red, _) <- ptryFrom @PFundraisingRedeemer redm
-  let verTokenCS = pfield @"verTokenCurrency" # fundraising
-      verTokenName = pfield @"verTokenName" # fundraising
-      output = getOnlyOneOwnOutput # ctx
-      inputValue = getOwnInputValue # ctx
-      inputAda = plovelaceValueOf # inputValue
-      outputValue = pfield @"value" # output
-      txInfo = getCtxInfoForSpending # ctx
-      deadline = pfield @"frDeadline" # dat
-      desiredFunds = pfield @"frAmount" # dat
-  protocolToken <- pletFields @["protocolCurrency", "protocolTokenName"] (pfield @"protocol" # fundraising)
+  frFields <- pletFields @["verTokenCurrency", "verTokenName", "protocol"] fundraising
+  inputValue <- plet $ getOwnInputValue # ctx
+  inputAda <- plet $ plovelaceValueOf # inputValue
+  txInfo <- plet $ getCtxInfoForSpending # ctx
+  datFields <- pletFields @["frDeadline", "frAmount", "creatorPkh", "managerPkh", "frFee"] dat
+  protocolToken <- pletFields @["protocolCurrency", "protocolTokenName"] frFields.protocol
   pmatch red $ \case
-    PDonate redData -> popaque $
-      unTermCont $ do
-        let threadTokenCS = pfield @"_0" # redData
-            threadTokenName = pfield @"_1" # redData
-            amountToDonate = pfield @"_2" # redData
-        checkDonateDatum dat ctx output
-        checkDonateAdaValue desiredFunds inputAda outputValue amountToDonate
-        checkNftIsInValue "405" verTokenCS verTokenName inputValue
-        checkNftIsInValue "406" verTokenCS verTokenName outputValue
-        checkNftIsInValue "407" threadTokenCS threadTokenName inputValue
-        checkNftIsInValue "408" threadTokenCS threadTokenName outputValue
-        checkDonatedBeforeDeadline deadline txInfo
-        pure $ pconstant ()
-    PReceiveFunds redData -> popaque $
-      unTermCont $ do
-        let creatorPkh = pfield @"creatorPkh" # dat
-            fees = pfield @"frFee" # dat
-            raisedFunds = inputAda #- minTxOut #- minTxOut
-            feePayment = calculateFees # fees # raisedFunds
-            protocol = pfield @"protocol" # fundraising
-            validInterval = pfrom # deadline
-            threadTokenCS = pfield @"_0" # redData
-            threadTokenName = pfield @"_1" # redData
-            managerPkh = pfield @"managerPkh" # dat
-        checkNftIsInValue "409" verTokenCS verTokenName inputValue
-        checkNftIsInValue "410" threadTokenCS threadTokenName inputValue
-        checkNoOutputs ctx
-        checkNftMinted "413" (-1) verTokenCS verTokenName txInfo
-        checkNftMinted "414" (-1) threadTokenCS threadTokenName txInfo
-        checkIsSignedBy "411" creatorPkh txInfo
-        checkManagerReceiveFee managerPkh feePayment txInfo
-        checkFundraisingCompleted deadline raisedFunds desiredFunds txInfo
-        pure $ pconstant ()
+    PDonate redData' -> popaque . unTermCont $ do
+      output <- pletC $ getOnlyOneOwnOutput # ctx
+      outputValue <- pletC $ pfield @"value" # output
+      redData <- pletFieldsC @["_0", "_1", "_2"] redData'
+      checkDonateDatum dat output
+      checkDonateAdaValue datFields.frAmount inputAda outputValue redData._2
+      checkNftIsInValue "405" frFields.verTokenCurrency frFields.verTokenName inputValue
+      checkNftIsInValue "406" frFields.verTokenCurrency frFields.verTokenName outputValue
+      checkNftIsInValue "407" redData._0 redData._1 inputValue
+      checkNftIsInValue "408" redData._0 redData._1 outputValue
+      checkDonatedBeforeDeadline datFields.frDeadline txInfo
+      pure $ pconstant ()
+    PReceiveFunds redData' -> popaque . unTermCont $ do
+      redData <- pletFieldsC @["_0", "_1"] redData'
+      raisedFunds <- pletC $ inputAda #- minTxOut #- minTxOut
+      feePayment <- pletC $ calculateFees # datFields.frFee # raisedFunds
+      validInterval <- pletC $ pfrom # datFields.frDeadline
+      checkNftIsInValue "409" frFields.verTokenCurrency frFields.verTokenName inputValue
+      checkNftIsInValue "410" redData._0 redData._1 inputValue
+      checkNoOutputs ctx
+      checkNftMinted "413" (-1) frFields.verTokenCurrency frFields.verTokenName txInfo
+      checkNftMinted "414" (-1) redData._0 redData._1 txInfo
+      checkIsSignedBy "411" datFields.creatorPkh txInfo
+      checkFeePaid datFields.managerPkh feePayment txInfo
+      checkFundraisingCompleted datFields.frDeadline raisedFunds datFields.frAmount txInfo
+      pure $ pconstant ()
 
-checkDonateDatum :: Term s PFundraisingDatum -> Term s PScriptContext -> Term s PTxOut -> TermCont s ()
-checkDonateDatum inputDatum ctx output = do
-  let outputDatum' = inlineDatumFromOutput # output
+checkDonateDatum :: Term s PFundraisingDatum -> Term s PTxOut -> TermCont s ()
+checkDonateDatum inputDatum output = do
+  outputDatum' <- pletC $ inlineDatumFromOutput # output
   (outputDatum, _) <- ptryFromC @PFundraisingDatum outputDatum'
   pguardC "401" (inputDatum #== outputDatum)
-  pure ()
 
 checkDonateAdaValue ::
   Term s PInteger ->
@@ -90,11 +77,10 @@ checkDonateAdaValue ::
   Term s PInteger ->
   TermCont s ()
 checkDonateAdaValue maxAmount inputAda outputValue amt = do
-  let outputAda = plovelaceValueOf # outputValue
+  outputAda <- pletC $ plovelaceValueOf # outputValue
   pguardC "402" (outputAda #== (inputAda #+ amt))
   pguardC "403" (minTxOut #<= amt)
   pguardC "404" (inputAda #< maxAmount)
-  pure ()
 
 calculateFees :: Term s (PInteger :--> PInteger :--> PInteger)
 calculateFees = phoistAcyclic $
@@ -119,21 +105,20 @@ checkFundrisingCompletedTime ::
   Term s (PAsData PTxInfo) ->
   TermCont s ()
 checkFundrisingCompletedTime deadline desiredFunds txInfo = do
-  let txRange = pfield @"validRange" # txInfo
-      calledReceiveFundsAt = pfromData $ getLowerBoundTime # txRange
-      fundrisingInterval = pto # deadline
+  txRange <- pletC $ pfield @"validRange" # txInfo
+  calledReceiveFundsAt <- pletC $ pfromData $ getLowerBoundTime # txRange
+  fundrisingInterval <- pletC $ pto # deadline
   pguardC "412" $ pafter # calledReceiveFundsAt # fundrisingInterval
 
 checkDonatedBeforeDeadline :: Term s (PAsData PPOSIXTime) -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkDonatedBeforeDeadline deadline txInfo = do
-  let txRange = pfield @"validRange" # txInfo
-  let donatedAt = pfromData $ getLowerBoundTime # txRange
-  let fundrisingInterval = pto # deadline
-  let donatedAfterDeadline = pafter # donatedAt # fundrisingInterval
+  txRange <- pletC $ pfield @"validRange" # txInfo
+  donatedAt <- pletC $ pfromData $ getLowerBoundTime # txRange
+  fundrisingInterval <- pletC $ pto # deadline
+  donatedAfterDeadline <- pletC $ pafter # donatedAt # fundrisingInterval
   pguardC "415" $ pnot # donatedAfterDeadline
 
-checkManagerReceiveFee :: Term s PPubKeyHash -> Term s PInteger -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkManagerReceiveFee managerPkh fee txOut = do
-  let outputsContainFeeOutput = pubKeyContainsAmountOutput # managerPkh # txOut # fee
+checkFeePaid :: Term s PPubKeyHash -> Term s PInteger -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkFeePaid managerPkh fee txOut = do
+  outputsContainFeeOutput <- pletC $ pubKeyContainsAmountOutput # managerPkh # txOut # fee
   pguardC "203" outputsContainFeeOutput
-  pure ()
