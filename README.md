@@ -1,10 +1,6 @@
-# donat-pool-contracts
+# donat-pool-onchain
 
-[Technical specification](https://docs.google.com/document/d/13nBgWRqfUBwJsOIgqEbwhmOVXEVJKjvgJXWmTwdsM0A/edit?usp=sharing)
-
-[One transaction workflow](https://docs.google.com/document/d/1A61UgkiTQVYdvCzx8gu9hwZy-akq0bYww9-vIRQaIfI/edit?usp=sharing)
-
-# Dev Notes
+## Dev Notes
 
 Install the following versions of GHC and cabal:
 
@@ -15,12 +11,12 @@ Cabal 3.6.2.0
 
 run `nix develop` and then `cabal build all` to compile project.
 
-# Compiling Plutus scripts
+## Compiling Plutus scripts
 
 For compiling Plutus scripts make sure that you have `compiled` folder in the project root and run `cabal run compile`.
 
 # Copy compiled scripts to offchain directory
 
-After scripts will be compiled we can copy them to offchain project:
+After scripts are compiled you can copy them to offchain project (as the path to offchain project is hardcoded, this step is helpful only if the onchain and offchain projects are located in the same parent directory):
 
 `cabal run copy-scripts`
