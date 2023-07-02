@@ -15,7 +15,7 @@ data PFundraisingDatum (s :: S)
           ( PDataRecord
               '[ "creatorPkh" ':= PPubKeyHash
                , "tokenOrigin" ':= PTxOutRef
-               , "frDesc" ':= PByteString -- description length is limited by descStringSize
+               , "frTitle" ':= PByteString -- description length is limited by descStringSize
                , "frAmount" ':= PInteger
                , "frDeadline" ':= PPOSIXTime
                , "frFee" ':= PInteger
