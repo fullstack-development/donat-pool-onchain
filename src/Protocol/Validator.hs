@@ -99,7 +99,7 @@ checkFundriseOutputDatum ::
   Term s PFundraisingDatum ->
   TermCont s ()
 checkFundriseOutputDatum pDatum frConfig frOutDatum = do
-  frDatum <- pletFieldsC @["frDesc", "frAmount", "frDeadline", "managerPkh"] frOutDatum
+  frDatum <- pletFieldsC @["frTitle", "frAmount", "frDeadline", "managerPkh"] frOutDatum
   startedAt <- pletC $ pfield @"startedAt" # frConfig
   protocolDatum <- pletFieldsC @["minAmount", "maxAmount", "minDuration", "maxDuration", "managerPkh", "protocolFee"] pDatum
 
@@ -111,7 +111,7 @@ checkFundriseOutputDatum pDatum frConfig frOutDatum = do
     )
   checkPermittedDuration protocolDatum.minDuration protocolDatum.maxDuration startedAt frDatum.frDeadline
   pguardC "127" (protocolDatum.managerPkh #== frDatum.managerPkh)
-  pguardC "133" (plengthBS # (pfromData frDatum.frDesc) #<= descStringSize)
+  pguardC "133" (plengthBS # (pfromData frDatum.frTitle) #<= descStringSize)
 
 checkFundriseOutputValue :: Term s PFundriseConfig -> Term s PTxOut -> TermCont s ()
 checkFundriseOutputValue frConfig frTxOut = do
