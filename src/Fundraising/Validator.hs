@@ -28,7 +28,7 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
   inputValue <- plet $ getOwnInputValue # ctx
   inputAda <- plet $ plovelaceValueOf # inputValue
   txInfo <- plet $ getCtxInfoForSpending # ctx
-  datFields <- pletFields @["frDeadline", "frAmount", "creatorPkh", "managerPkh", "frFee"] dat
+  datFields <- pletFields @["frDeadline", "frAmount", "creatorPkh", "managerAddress", "frFee"] dat
   protocolToken <- pletFields @["protocolCurrency", "protocolTokenName"] frFields.protocol
   pmatch red $ \case
     PDonate redData' -> popaque . unTermCont $ do
@@ -54,7 +54,7 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
       checkNftMinted "413" (-1) frFields.verTokenCurrency frFields.verTokenName txInfo
       checkNftMinted "414" (-1) redData._0 redData._1 txInfo
       checkIsSignedBy "411" datFields.creatorPkh txInfo
-      checkFeePaid datFields.managerPkh feePayment txInfo
+      checkFeePaid datFields.managerAddress feePayment ctx
       checkFundraisingCompleted datFields.frDeadline raisedFunds datFields.frAmount txInfo
       pure $ pconstant ()
 
@@ -112,7 +112,8 @@ checkDonatedBeforeDeadline deadline txInfo = do
   donatedAfterDeadline <- pletC $ pafter # donatedAt # fundrisingInterval
   pguardC "415" $ pnot # donatedAfterDeadline
 
-checkFeePaid :: Term s PPubKeyHash -> Term s PInteger -> Term s (PAsData PTxInfo) -> TermCont s ()
-checkFeePaid managerPkh fee txOut = do
-  outputsContainFeeOutput <- pletC $ pubKeyContainsAmountOutput # managerPkh # txOut # fee
-  pguardC "203" outputsContainFeeOutput
+checkFeePaid :: Term s (PAsData PAddress) -> Term s PInteger -> Term s PScriptContext -> TermCont s ()
+checkFeePaid managerAddress fee ctx = do
+  managerOutput <- pletC $ getOutputByAddress # ctx # (pfromData managerAddress)
+  outputAda <- pletC $ plovelaceValueOf # (pfield @"value" # managerOutput)
+  pguardC "203" (outputAda #== fee)
