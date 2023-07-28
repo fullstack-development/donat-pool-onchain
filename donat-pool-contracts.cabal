@@ -93,10 +93,18 @@ library
     Ext.Plutarch.Extra.Time
     Ext.Plutus.MinAda
     Ext.Ply.Plutarch.TypedWriter
+    Governance.Datum
+    Governance.Proposal.Datum
+    Governance.Proposal.Model
+    Governance.Proposal.Redeemer
+    Governance.Proposal.Validator
+    Governance.Redeemer
+    Governance.Validator
     Fundraising.Datum
     Fundraising.Model
     Fundraising.Redeemer
     Fundraising.Validator
+    MintingPolicy.Governance
     MintingPolicy.NFT
     MintingPolicy.VerToken
     Protocol.Datum

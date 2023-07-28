@@ -7,6 +7,9 @@ import MintingPolicy.VerToken (verTokenPolicy)
 import Plutarch
 import Ply.Plutarch
 import Protocol.Validator (protocolValidator)
+import Governance.Validator (governanceValidator)
+import Governance.Proposal.Validator (proposalValidator)
+import  MintingPolicy.Governance (governancePolicy)
 
 -- Compiles scripts and put them to files in the "compiled" folder
 main :: IO ()
@@ -27,3 +30,15 @@ main = do
     "Fundraising validator"
     "fundraisingValidator.plutus"
     fundraisingValidator
+  writeTypedScriptTraced
+    "Governance validator"
+    "governance.plutus"
+    governanceValidator
+  writeTypedScriptTraced
+    "Proposal validator"
+    "proposal.plutus"
+    proposalValidator
+  writeTypedScriptTraced
+    "ADAO Minting Policy"
+    "adaoPolicy.plutus"
+    governancePolicy

@@ -120,3 +120,11 @@ checkFundriseOutputValue frConfig frTxOut = do
   checkNftIsInValue "120" (pfield @"verCurrencySymbol" # frConfig) (pfield @"verTokenName" # frConfig) value
   checkNftIsInValue "121" (pfield @"threadCurrencySymbol" # frConfig) (pfield @"threadTokenName" # frConfig) value
   pguardC "122" (adaAmount #== minTxOut #+ minTxOut)
+
+getProtocolDatumFromReferenceUtxo :: Term s (PProtocol :--> PScriptContext :--> PProtocolDatum)
+getProtocolDatumFromReferenceUtxo = phoistAcyclic $
+  plam $ \protocolToken ctx -> P.do
+    token <- pletFields @["protocolCurrency", "protocolTokenName"] protocolToken
+    protocolInput <- plet $ getOnlyOneRefInputByToken # token.protocolCurrency # token.protocolTokenName # ctx
+    (protocolDatum, _) <- ptryFrom @PProtocolDatum $ inlineDatumFromOutput # protocolInput
+    protocolDatum

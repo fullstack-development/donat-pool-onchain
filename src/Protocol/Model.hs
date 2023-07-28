@@ -63,6 +63,14 @@ instance PTryFrom PData PProtocolConfig
 
 instance PTryFrom PData (PAsData PProtocolConfig)
 
+data ProtocolConfig = ProtocolConfig {
+  minAmount :: Integer,
+  maxAmount :: Integer,
+  minDuration :: Integer,
+  maxDuration :: Integer,
+  protocolFee :: Integer
+}
+
 data PFundriseConfig (s :: S)
   = PFundriseConfig
       ( Term
