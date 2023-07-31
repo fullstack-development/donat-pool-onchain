@@ -39,6 +39,6 @@ main = do
     "proposal.plutus"
     proposalValidator
   writeTypedScriptTraced
-    "ADAO Minting Policy"
-    "adaoPolicy.plutus"
+    "Governance Minting Policy"
+    "governancePolicy.plutus"
     governancePolicy

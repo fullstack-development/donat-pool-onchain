@@ -102,4 +102,4 @@ checkProposalOutput txInfo proposal proposalAddress threadCur verCur quorum = do
   pguardC "1310" $ (outDatum.for #== pdata 0) #&& (outDatum.against #== pdata 0)
 
 governanceThreadTokenName :: Term s PTokenName
-governanceThreadTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "AdadaoGovernance")
+governanceThreadTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "DonatPoolGovernance")
