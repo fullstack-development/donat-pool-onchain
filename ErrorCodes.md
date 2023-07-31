@@ -43,6 +43,7 @@
 309: Can't get time from infinite upper bound
 310: No reference inputs with current threadToken found
 311: More than one reference inputs with current threadToken found
+312: Impossible to extract PubKeyHash from script credentials
 
 ## Fundraising.Validator
 401: Fundraising datum change not expected while Donating

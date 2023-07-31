@@ -50,14 +50,14 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
 
 checkSignedByManager :: Term s PProtocolDatum -> Term s (PAsData PTxInfo) -> TermCont s ()
 checkSignedByManager datum txInfo = do
-  let managerPkh = pfield @"managerPkh" # datum
+  managerPkh <- pletC $ extractPaymentPkhFromAddress #$ pfield @"managerAddress" # datum
   checkIsSignedBy "111" managerPkh txInfo
 
 checkUpdateProtocolDatum :: Term s PProtocolDatum -> Term s PTxOut -> TermCont s ()
 checkUpdateProtocolDatum inDatum txOut = do
   let outDatum' = inlineDatumFromOutput # txOut
   (outDatum, _) <- ptryFromC @PProtocolDatum outDatum'
-  pguardC "112" (pfield @"managerPkh" # inDatum #== pfield @"managerPkh" # outDatum)
+  pguardC "112" (pfield @"managerAddress" # inDatum #== pfield @"managerAddress" # outDatum)
   pguardC "113" (pfield @"tokenOriginRef" # inDatum #== pfield @"tokenOriginRef" # outDatum)
   pguardC "114" (pnot #$ inDatum #== outDatum)
   checkOutputDatumFields outDatum
@@ -99,10 +99,10 @@ checkFundriseOutputDatum ::
   Term s PFundraisingDatum ->
   TermCont s ()
 checkFundriseOutputDatum pDatum frConfig frOutDatum = do
-  frDatum <- pletFieldsC @["frTitle", "frAmount", "frDeadline", "managerPkh"] frOutDatum
+  frDatum <- pletFieldsC @["frTitle", "frAmount", "frDeadline", "managerAddress"] frOutDatum
   startedAt <- pletC $ pfield @"startedAt" # frConfig
-  protocolDatum <- pletFieldsC @["minAmount", "maxAmount", "minDuration", "maxDuration", "managerPkh", "protocolFee"] pDatum
-
+  protocolDatum <- pletFieldsC @["minAmount", "maxAmount", "minDuration", "maxDuration", "managerAddress", "protocolFee"] pDatum
+  
   pguardC "118" (pfield @"frFee" # frOutDatum #== protocolDatum.protocolFee)
   pguardC
     "119"
@@ -110,7 +110,7 @@ checkFundriseOutputDatum pDatum frConfig frOutDatum = do
         #&& pfromData frDatum.frAmount #<= pfromData protocolDatum.maxAmount
     )
   checkPermittedDuration protocolDatum.minDuration protocolDatum.maxDuration startedAt frDatum.frDeadline
-  pguardC "127" (protocolDatum.managerPkh #== frDatum.managerPkh)
+  pguardC "127" (protocolDatum.managerAddress #== frDatum.managerAddress)
   pguardC "133" (plengthBS # (pfromData frDatum.frTitle) #<= descStringSize)
 
 checkFundriseOutputValue :: Term s PFundriseConfig -> Term s PTxOut -> TermCont s ()

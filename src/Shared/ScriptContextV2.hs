@@ -180,3 +180,10 @@ getUpperBoundTime = phoistAcyclic $
      in pmatch (pfield @"_0" # upperBound) $ \case
           PFinite finite -> pfield @"_0" # finite
           _ -> ptraceError "309"
+
+extractPaymentPkhFromAddress :: Term s (PAddress :--> PPubKeyHash)
+extractPaymentPkhFromAddress = phoistAcyclic $
+  plam $ \address ->
+    pmatch (pfield @"credential" # address) $ \case
+      PPubKeyCredential pkh -> pfield @"_0" # pkh
+      _ -> ptraceError "312"
