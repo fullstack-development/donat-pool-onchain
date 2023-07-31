@@ -40,7 +40,7 @@ governanceValidator = phoistAcyclic $
             redData <- pletFieldsC @["_0", "_1", "_2", "_3"] redData'
 
             currentProtocolDatum <- pletC $ getProtocolDatumFromReferenceUtxo # protocol # ctx
-            let managerPkh = pfield @"managerPkh" # currentProtocolDatum
+            let managerPkh = extractPaymentPkhFromAddress #$ pfield @"managerAddress" # currentProtocolDatum
             inputDatum <- pletFieldsC @["quorum", "fee"] dat
 
             checkProposal redData._0 currentProtocolDatum txInfo
