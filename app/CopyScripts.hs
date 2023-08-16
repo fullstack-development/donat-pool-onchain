@@ -15,7 +15,7 @@ import System.Directory
 main :: IO ()
 main = do
   let sourceDir = "compiled"
-  let targetDir = "../offchain/scripts"
+  let targetDir = "../donat-pool-offchain/scripts"
   allFiles <- getDirectoryContents sourceDir
   let plutusScripts = filter (isSuffixOf ".plutus") allFiles
   mapM_ (copyScriptWithConvertation sourceDir targetDir) plutusScripts

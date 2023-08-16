@@ -38,5 +38,5 @@ governancePolicy = plam $ \ref rdm' ctx -> P.do
         red <- pletFieldsC @["_0", "_1"] mintFields
         checkUTxOSpent ref ctx
         checkMintingAmount red._0 govTokenName ctx
-        checkIsSignedBy "549" red._1 txInfo 
+        checkIsSignedBy "549" red._1 txInfo -- TODO: error code
         pure $ pconstant ()
