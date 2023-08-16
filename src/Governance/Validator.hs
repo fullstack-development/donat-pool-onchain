@@ -35,7 +35,6 @@ governanceValidator = phoistAcyclic $
     
     pmatch red $ \case
         PCreateProposal redData' -> popaque . unTermCont $ do
-            -- protocol and psm - are the reference inputs
             checkNftIsInValue "1301" systemCurrency governanceThreadTokenName inValue
             redData <- pletFieldsC @["_0", "_1", "_2", "_3"] redData'
 
@@ -46,7 +45,8 @@ governanceValidator = phoistAcyclic $
             checkProposal redData._0 currentProtocolDatum txInfo
             checkProposalFeePayment inputDatum.fee managerPkh txInfo
             checkProposalOutput ctx redData._0 redData._1 redData._2 redData._3 inputDatum.quorum
- 
+            checkGovernanceOutput ctx dat inValue
+
             pure $ pconstant ()
 
 checkProposal :: 
@@ -82,8 +82,8 @@ checkProposalOutput ::
   -> Term s PCurrencySymbol
   -> Term s PInteger
   -> TermCont s ()
-checkProposalOutput txInfo proposal proposalAddress threadCur verCur quorum = do
-  proposalOutput <- pletC $ getOutputByAddress # txInfo # proposalAddress
+checkProposalOutput ctx proposal proposalAddress threadCur verCur quorum = do
+  proposalOutput <- pletC $ getOutputByAddress # ctx # proposalAddress
   outValue <- pletC $ pfield @"value" # proposalOutput
   adaAmount <- pletC $ Value.plovelaceValueOf # outValue
   pguardC "1306" (adaAmount #== minTxOut)
@@ -96,10 +96,39 @@ checkProposalOutput txInfo proposal proposalAddress threadCur verCur quorum = do
 
   outputDatum' <- pletC $ inlineDatumFromOutput # proposalOutput
   (outputDatum, _) <- tcont $ ptryFrom @PProposalDatum outputDatum'
-  outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum"] outputDatum
+  outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "applied"] outputDatum
   pguardC "1308" $ outDatum.proposal #== proposal
   pguardC "1309" $ outDatum.quorum #== quorum
+  pguardC "1314" $ outDatum.applied #== pdata 0
+  txInfo <- pletC $ pfield @"txInfo" # ctx
+  checkIsSignedBy "1305" outDatum.initiator txInfo
+  -- TODO: checkPermittedDuration
   pguardC "1310" $ (outDatum.for #== pdata 0) #&& (outDatum.against #== pdata 0)
 
 governanceThreadTokenName :: Term s PTokenName
 governanceThreadTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "DonatPoolGovernance")
+
+checkGovernanceOutput :: 
+  Term s PScriptContext
+  -> Term s PGovernanceDatum
+  -> Term s SortedPositiveValue
+  -> TermCont s ()
+checkGovernanceOutput ctx inDatum inValue = do
+  govOutput <- pletC $ getOnlyOneOwnOutput # ctx
+  govOutDatum' <- pletC $ inlineDatumFromOutput # govOutput
+  (outDatum, _) <- ptryFromC @PGovernanceDatum govOutDatum'
+  pguardC  "1312" $ (inDatum #== outDatum) 
+  outValue <- pletC $ pfield @"value" # govOutput
+  pguardC  "1213" $ (inValue #== outValue) 
+
+-- checkPermittedDuration ::
+--   Term s PInteger ->
+--   Term s PInteger ->
+--   Term s (PAsData PPOSIXTime) ->
+--   Term s (PAsData PPOSIXTime) ->
+--   TermCont s ()
+-- checkPermittedDuration minDurationMinutes maxDurationMinutes startedAt deadline = do
+--   let minDuration = minutesToPosixDuration # minDurationMinutes # startedAt
+--   let maxDuration = minutesToPosixDuration # maxDurationMinutes # startedAt
+--   let permittedDuration = pinterval # minDuration # maxDuration
+--   pguardC "1315" (pmember # deadline # permittedDuration)

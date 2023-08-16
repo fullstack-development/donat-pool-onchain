@@ -10,6 +10,7 @@ import Protocol.Validator (protocolValidator)
 import Governance.Validator (governanceValidator)
 import Governance.Proposal.Validator (proposalValidator)
 import  MintingPolicy.Governance (governancePolicy)
+import MintingPolicy.Proposal (proposalPolicy)
 
 -- Compiles scripts and put them to files in the "compiled" folder
 main :: IO ()
@@ -42,3 +43,7 @@ main = do
     "Governance Minting Policy"
     "governancePolicy.plutus"
     governancePolicy
+  writeTypedScriptTraced
+    "Proposal Thread Minting Policy"
+    "proposalPolicy.plutus"
+    proposalPolicy

@@ -106,6 +106,7 @@ library
     Fundraising.Validator
     MintingPolicy.Governance
     MintingPolicy.NFT
+    MintingPolicy.Proposal
     MintingPolicy.VerToken
     Protocol.Datum
     Protocol.Model

@@ -15,6 +15,8 @@ data PGovernanceDatum (s :: S)
               '[ "quorum" ':= PInteger
                , "fee" ':= PInteger
                , "govCurrency" ':= PCurrencySymbol
+               , "govTokenName" ':= PTokenName
+               , "duration" ':= PInteger
                ]
           )
       )
