@@ -75,7 +75,7 @@ checkProposalOutput ::
   -> TermCont s ()
 checkProposalOutput ctx proposal proposalAddress threadCur verCur startedAt govInputDatum' = do
   proposalOutput <- pletC $ getOutputByAddress # ctx # proposalAddress
-  govInputDatum <- pletFieldsC @["quorum", "fee", "minDuration", "maxDuration"] govInputDatum'
+  govInputDatum <- pletFieldsC @["quorum", "fee", "duration"] govInputDatum'
   proposalOutValue <- pletC $ pfield @"value" # proposalOutput
   adaAmount <- pletC $ Value.plovelaceValueOf # proposalOutValue
   pguardC "1304" $ minTxOut #<= govInputDatum.fee
@@ -96,7 +96,7 @@ checkProposalOutput ctx proposal proposalAddress threadCur verCur startedAt govI
   pguardC "1314" $ outDatum.applied #== pdata 0
   -- checkPermittedDuration govInputDatum.minDuration govInputDatum.maxDuration startedAt outDatum.deadline
   txInfo <- pletC $ pfield @"txInfo" # ctx
-  checkIsSignedBy "1305" outDatum.initiator txInfo
+  checkIsSignedBy "1305" (extractPaymentPkhFromAddress # outDatum.initiator) txInfo
   checkUTxOSpent outDatum.policyRef ctx
 
 checkGovernanceOutput :: 

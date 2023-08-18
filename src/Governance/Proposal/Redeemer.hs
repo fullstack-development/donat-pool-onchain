@@ -7,7 +7,7 @@ import Plutarch.DataRepr
 import Plutarch.Prelude
 
 type IsVoteFor = PInteger   -- "against" = 0, "for" = 1
-type Voter = PPubKeyHash
+type Voter = PAddress
 
 data PProposalRedeemer (s :: S)
   = PVote
