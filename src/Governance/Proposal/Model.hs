@@ -16,7 +16,7 @@ data PProposal (s :: S)
           ( PDataRecord
               '[ 
                 "protocolCurrency" ':= PCurrencySymbol,
-                "govCurrency" ':= PCurrencySymbol
+                "verTokenCurrency" ':= PCurrencySymbol
                ]
           )
       )

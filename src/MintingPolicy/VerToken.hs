@@ -8,10 +8,13 @@ import qualified Plutarch.Monadic as P
 import Plutarch.Prelude hiding (Generic)
 import Protocol.Model
 import Shared.Checks (checkMintingAmount, checkNftIsInTxInput, checkNftIsInTxOutput)
+import Governance.Validator (governanceThreadTokenName)
 
 data PVerTokenRedeemer (s :: S)
   = PMintVerToken (Term s (PDataRecord '["_0" ':= PTokenName]))
   | PBurnVerToken (Term s (PDataRecord '["_0" ':= PTokenName]))
+  | PMintProposalVerToken (Term s (PDataRecord '["_0" ':= PTokenName]))
+  
   deriving stock (GHC.Generic)
   deriving anyclass (Generic)
   deriving anyclass (PlutusType, PIsData)
@@ -39,3 +42,12 @@ verTokenPolicy = plam $ \protocol rdm' ctx -> P.do
         let tn = pfield @"_0" # burnFields
         checkMintingAmount (-1) tn ctx
         pure $ pconstant ()
+    PMintProposalVerToken mintFields -> popaque $
+      unTermCont $ do
+        let verTokenName = pfield @"_0" # mintFields
+            protocolCurrency = pfield @"protocolCurrency" # protocol            
+        checkMintingAmount 1 verTokenName ctx
+        checkNftIsInTxInput protocolCurrency governanceThreadTokenName ctx
+        checkNftIsInTxOutput protocolCurrency governanceThreadTokenName ctx
+        pure $ pconstant ()
+

@@ -9,6 +9,7 @@ import Plutarch.Prelude
 type PProposalAddress = PAddress
 type PProposalThreadCurrency = PCurrencySymbol
 type PProposalVerCurrency = PCurrencySymbol
+type PProposalStartedAt = PPOSIXTime
 
 data PGovernanceRedeemer (s :: S)
   = PCreateProposal
@@ -19,6 +20,7 @@ data PGovernanceRedeemer (s :: S)
                , "_1" ':= PProposalAddress
                , "_2" ':= PProposalThreadCurrency
                , "_3" ':= PProposalVerCurrency
+               , "_4" ':= PProposalStartedAt
                ]
           )
       )
