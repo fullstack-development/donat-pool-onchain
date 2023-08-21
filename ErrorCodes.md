@@ -62,3 +62,28 @@
 413: should burn verToken on close fundraising
 414: should burn threadToken on close fundraising
 415: can't donate after fundrising deadline
+
+## Ext.Plutarch.Extra.Bool
+501: Can't parse integer to make Bool
+
+## MintingPolicy.Proposal
+601: Unexpected Vote token name length
+602: Vote token name first symbol must be 'v'
+
+## MintingPolicy.Governance
+701: Unexpected minting governance tokens transaction signer
+
+## Governance.Validator
+801: Governance ThreadToken missed in the CreateProposal transaction
+802: Protocol proposal doesn't contain any changes
+804: Proposal fee less than minAda
+805: Unexpected create proposal initiator
+806: Unexpected Ada value in output while proposal creation
+807: Unexpected non-Ada value in output while proposal creation
+808: Unexpected proposal in the output datum
+809: Unexpected quorum in the output datum
+810: Unexpected for and against values in tne output datum
+812: Governance datum shouldn't be changed during the Create Proposal transaction
+813: Governance value shouldn't be changed during the Create Proposal transaction
+814: New proposal shouldn't be applied
+815: Proposal duration is out of the range configured in governance

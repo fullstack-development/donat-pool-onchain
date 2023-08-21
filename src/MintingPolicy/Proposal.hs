@@ -85,13 +85,13 @@ makeVoteTn  = phoistAcyclic $
       pif
         (plengthBS # tnBs #<= tokenNameSizeLimit)
         (pcon . PTokenName $ tnBs)
-        (ptraceError "804")
+        (ptraceError "601")
 
 -- parseVoteTokenName :: Term s (PByteString :--> PTuple PInteger PInteger)  -- Result: (Vote, Amount)
 -- parseVoteTokenName = phoistAcyclic $
 --   plam $ \tokenName -> P.do
 --     length <- plet $ plengthBS # tokenName
---     pif (pnot #$ (psliceBS # 0 # 1 # tokenName) #== pconsBS # 118 # mempty) (ptraceError "805") $ P.do
+--     pif (pnot #$ (psliceBS # 0 # 1 # tokenName) #== pconsBS # 118 # mempty) (ptraceError "602") $ P.do
 --         voteSymbols <- plet $ countNotDotSymbols # (psliceBS # 1 # (length #- 1) # tokenName) # 0
 --         voteDropped <- plet $ 1 #+ voteSymbols #+ 1
 --         amountSymbols <- plet $ countNotDotSymbols # (psliceBS # voteDropped # (length #- voteDropped) # tokenName) # 0
@@ -99,9 +99,4 @@ makeVoteTn  = phoistAcyclic $
 --         amount <- plet $ bsToInteger # (psliceBS # voteDropped # amountSymbols # tokenName) # 0
 --         ptuple # pdata vote # pdata amount
 
-integerToBool :: Term s (PInteger :--> PBool)
-integerToBool = phoistAcyclic $ 
-  plam $ \flag -> 
-    pif (flag #== (1 :: Term s PInteger)) (pcon PTrue) $
-      pif (flag #== (0 :: Term s PInteger)) (pcon PFalse) $ ptraceError "806"
 

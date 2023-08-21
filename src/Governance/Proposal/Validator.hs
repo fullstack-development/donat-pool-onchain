@@ -17,6 +17,7 @@ import Governance.Proposal.Datum
 import PlutusLedgerApi.V1 (PubKeyHash)
 import Governance.Proposal.Model (PProposal)
 
+-- TODO: error codes
 proposalValidator :: ClosedTerm (PProposal :--> PValidator)
 proposalValidator = phoistAcyclic $
   plam $ \gov dat' rdm' ctx -> P.do
