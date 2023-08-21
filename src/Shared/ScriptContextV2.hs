@@ -202,5 +202,5 @@ getMintingTokenCurrency = phoistAcyclic $
     purpose <- plet $ pfield @"purpose" # ctx
     pmatch purpose $ \case
       PMinting mintFlds -> pfield @"_0" # mintFlds
-      _ -> ptraceError "310"
+      _ -> ptraceError "313"
 

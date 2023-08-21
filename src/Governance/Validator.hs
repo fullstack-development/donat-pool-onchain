@@ -18,7 +18,7 @@ import PlutusLedgerApi.V1 (PubKeyHash)
 import Protocol.Model (PProtocolConfig, PProtocol, ProtocolConfig (..))
 import qualified PlutusLedgerApi.V1 as Plutus
 import qualified PlutusTx.Prelude as Plutus
-import Governance.Proposal.Model (proposalThreadTokenName, proposalVerTokenName)
+import Governance.Proposal.Model (proposalThreadTokenName, proposalVerTokenName, PProposal)
 import Protocol.Validator (getProtocolDatumFromReferenceUtxo)
 import Protocol.Datum (PProtocolDatum)
 import qualified Protocol.Model as Proposal
@@ -36,68 +36,12 @@ governanceValidator = phoistAcyclic $
     
     pmatch red $ \case
         PCreateProposal redData' -> popaque . unTermCont $ do
-            checkNftIsInValue "1301" systemCurrency governanceThreadTokenName inValue
             -- redData: proposalParams, proposalAddress, proposalThreadCs, proposalVerCs, proposalStartedAt
             redData <- pletFieldsC @["_0", "_1", "_2", "_3", "_4"] redData' 
-
-            -- TODO: check that protocol changed
-            -- currentProtocolConf <- pletC $ getProtocolConfigFromReferenceUtxo # protocol # txInfo
-            -- checkProposal redData._0 protocol currentProtocolConf txInfo
-
-            checkProposalOutput ctx redData._0 redData._1 redData._2 redData._3 redData._4 dat
+            checkNftIsInValue "1301" systemCurrency governanceThreadTokenName inValue
+            checkProposalOutput protocol ctx redData._0 redData._1 redData._2 redData._3 redData._4 dat
             checkGovernanceOutput ctx dat inValue
             pure $ pconstant ()
-
--- checkProposal :: 
---   Term s PProposalParameters 
---   -> Term s PStablecoinProtocolThreadToken 
---   -> Term s PProtocolConfiguration
---   -> Term s (PAsData PTxInfo) 
---   -> TermCont s ()
--- checkProposal proposalParams protocol currentProtocolConf txInfo = do
---   pmatchC proposalParams >>= \case
---     protocolProposal@(PProtocolProposal _) -> do
---       let currentProtocol = protocolConfToProposal # currentProtocolConf
---       pguardC  "1302" $ pnot # (pcon protocolProposal #== currentProtocol) 
---     psmProposal@(PPsmProposal _) ->  do
---       currentPsmDatum <- pletC $ getPsmDatumFromReferenceUtxo # protocol # txInfo
---       let currentPsm = psmDatumToProposal # currentPsmDatum
---       pguardC  "1303" $ pnot # (pcon psmProposal #== currentPsm) 
-
-checkProposalOutput :: 
-  Term s PScriptContext
-  -> Term s PProposalParameters
-  -> Term s PAddress 
-  -> Term s PCurrencySymbol
-  -> Term s PCurrencySymbol
-  -> Term s (PAsData PPOSIXTime)
-  -> Term s PGovernanceDatum
-  -> TermCont s ()
-checkProposalOutput ctx proposal proposalAddress threadCur verCur startedAt govInputDatum' = do
-  proposalOutput <- pletC $ getOutputByAddress # ctx # proposalAddress
-  govInputDatum <- pletFieldsC @["quorum", "fee", "duration"] govInputDatum'
-  proposalOutValue <- pletC $ pfield @"value" # proposalOutput
-  adaAmount <- pletC $ Value.plovelaceValueOf # proposalOutValue
-  pguardC "1304" $ minTxOut #<= govInputDatum.fee
-  pguardC "1306" (adaAmount #== minTxOut #+ govInputDatum.fee)
-
-  outputNonAdaValue <- pletC $ Value.pforgetPositive $ Value.pnoAdaValue # proposalOutValue
-  expectedTokensValue <- pletC $ 
-    Value.psingleton # threadCur # proposalThreadTokenName # 1 
-    <> Value.psingleton # verCur # proposalVerTokenName # 1
-  pguardC "1307" (outputNonAdaValue #== expectedTokensValue)
-
-  proposalOutDatum' <- pletC $ inlineDatumFromOutput # proposalOutput
-  (proposalOutDatum, _) <- tcont $ ptryFrom @PProposalDatum proposalOutDatum'
-  outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "applied"] proposalOutDatum
-  pguardC "1308" $ outDatum.proposal #== proposal
-  pguardC "1309" $ outDatum.quorum #== govInputDatum.quorum
-  pguardC "1310" $ (outDatum.for #== pdata 0) #&& (outDatum.against #== pdata 0)
-  pguardC "1314" $ outDatum.applied #== pdata 0
-  -- checkPermittedDuration govInputDatum.minDuration govInputDatum.maxDuration startedAt outDatum.deadline
-  txInfo <- pletC $ pfield @"txInfo" # ctx
-  checkIsSignedBy "1305" (extractPaymentPkhFromAddress # outDatum.initiator) txInfo
-  checkUTxOSpent outDatum.policyRef ctx
 
 checkGovernanceOutput :: 
   Term s PScriptContext
@@ -111,6 +55,76 @@ checkGovernanceOutput ctx inDatum inValue = do
   pguardC  "1312" $ (inDatum #== outDatum) 
   outValue <- pletC $ pfield @"value" # govOutput
   pguardC  "1213" $ (inValue #== outValue) 
+
+
+checkProposalOutput :: 
+  Term s PProtocol
+  -> Term s PScriptContext
+  -> Term s PProposalParameters
+  -> Term s PAddress 
+  -> Term s PCurrencySymbol
+  -> Term s PCurrencySymbol
+  -> Term s (PAsData PPOSIXTime)
+  -> Term s PGovernanceDatum
+  -> TermCont s ()
+checkProposalOutput protocol ctx proposal proposalAddress threadCs verCs startedAt govInputDatum' = do
+  checkProposalCanChangeProtocol protocol proposal ctx
+  proposalOutput <- pletC $ getOutputByAddress # ctx # proposalAddress
+  govInputDatum <- pletFieldsC @["quorum", "fee", "duration"] govInputDatum'
+  checkProposalValue proposalOutput govInputDatum.fee threadCs verCs
+  checkProposalDatum proposal proposalOutput govInputDatum.quorum ctx
+
+checkProposalValue :: 
+  Term s PTxOut
+  -> Term s PInteger
+  -> Term s PCurrencySymbol
+  -> Term s PCurrencySymbol
+  -> TermCont s ()
+checkProposalValue proposalOutput fee threadCs verCs = do
+  proposalOutValue <- pletC $ pfield @"value" # proposalOutput
+  adaAmount <- pletC $ Value.plovelaceValueOf # proposalOutValue
+  pguardC "1304" $ minTxOut #<= fee
+  pguardC "1306" (adaAmount #== minTxOut #+ fee)
+  outputNonAdaValue <- pletC $ Value.pforgetPositive $ Value.pnoAdaValue # proposalOutValue
+  expectedTokensValue <- pletC $ 
+    Value.psingleton # threadCs # proposalThreadTokenName # 1 
+    <> Value.psingleton # verCs # proposalVerTokenName # 1
+  pguardC "1307" (outputNonAdaValue #== expectedTokensValue)
+
+checkProposalDatum :: 
+  Term s PProposalParameters
+  -> Term s PTxOut 
+  -> Term s (PAsData PInteger) 
+  -> Term s PScriptContext
+  -> TermCont s ()
+checkProposalDatum proposal proposalOutput quorum ctx = do
+  proposalOutDatum' <- pletC $ inlineDatumFromOutput # proposalOutput
+  (proposalOutDatum, _) <- tcont $ ptryFrom @PProposalDatum proposalOutDatum'
+  outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "applied"] proposalOutDatum
+  pguardC "1308" $ outDatum.proposal #== proposal
+  pguardC "1309" $ outDatum.quorum #== quorum
+  pguardC "1310" $ (outDatum.for #== pdata 0) #&& (outDatum.against #== pdata 0)
+  checkUTxOSpent outDatum.policyRef ctx
+  pguardC "1314" $ outDatum.applied #== pdata 0
+  txInfo <- pletC $ pfield @"txInfo" # ctx
+  checkIsSignedBy "1305" (extractPaymentPkhFromAddress # outDatum.initiator) txInfo
+  -- checkPermittedDuration govInputDatum.minDuration govInputDatum.maxDuration startedAt outDatum.deadline
+
+checkProposalCanChangeProtocol :: 
+  Term s PProtocol 
+  -> Term s PProposalParameters 
+  -> Term s PScriptContext 
+  -> TermCont s ()
+checkProposalCanChangeProtocol protocol proposal' ctx = do
+  protocolDatum' <- pletC $ getProtocolDatumFromReferenceUtxo # protocol # ctx
+  protocolDatum <- pletFieldsC @["minAmount", "maxAmount", "minDuration", "maxDuration", "protocolFee"] protocolDatum'
+  proposal <- pletFieldsC @["minAmount", "maxAmount", "minDuration", "maxDuration", "protocolFee"] proposal'
+  pguardC "" $ pnot #$
+    (protocolDatum.minAmount #== proposal.minAmount
+    #&& protocolDatum.maxAmount #== proposal.maxAmount
+    #&& protocolDatum.minDuration #== proposal.minDuration
+    #&& protocolDatum.maxDuration #== proposal.maxDuration
+    #&& protocolDatum.protocolFee #== proposal.protocolFee)
 
 -- checkPermittedDuration ::
 --   Term s PInteger ->

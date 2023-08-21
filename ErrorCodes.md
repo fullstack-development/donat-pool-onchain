@@ -44,6 +44,7 @@
 310: No reference inputs with current threadToken found
 311: More than one reference inputs with current threadToken found
 312: Impossible to extract PubKeyHash from script credentials
+313: No minting performed in transaction
 
 ## Fundraising.Validator
 401: Fundraising datum change not expected while Donating
