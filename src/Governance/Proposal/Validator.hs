@@ -3,7 +3,7 @@ module Governance.Proposal.Validator where
 
 import Ext.Plutus.MinAda
 import qualified Plutarch.Api.V1.Value as Value
-import Plutarch.Api.V2
+import Plutarch.Api.V2 ( PValidator )
 import Plutarch.Extra.TermCont
 import Plutarch.Num (pnegate, (#+), (#-))
 import qualified Plutarch.Monadic as P

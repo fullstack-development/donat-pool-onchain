@@ -23,6 +23,8 @@ import Protocol.Validator (getProtocolDatumFromReferenceUtxo)
 import Protocol.Datum (PProtocolDatum)
 import qualified Protocol.Model as Proposal
 import MintingPolicy.NFT (checkUTxOSpent)
+import Ext.Plutarch.Extra.Time (minutesToPosixDuration, addTimes)
+import Plutarch.Extra.Interval (pinterval)
 
 governanceValidator :: ClosedTerm (PProtocol :--> PValidator)
 governanceValidator = phoistAcyclic $
@@ -72,7 +74,7 @@ checkProposalOutput protocol ctx proposal proposalAddress threadCs verCs started
   proposalOutput <- pletC $ getOutputByAddress # ctx # proposalAddress
   govInputDatum <- pletFieldsC @["quorum", "fee", "duration"] govInputDatum'
   checkProposalValue proposalOutput govInputDatum.fee threadCs verCs
-  checkProposalDatum proposal proposalOutput govInputDatum.quorum ctx
+  checkProposalDatum proposal proposalOutput govInputDatum.quorum govInputDatum.duration startedAt ctx
 
 checkProposalValue :: 
   Term s PTxOut
@@ -95,9 +97,11 @@ checkProposalDatum ::
   Term s PProposalParameters
   -> Term s PTxOut 
   -> Term s (PAsData PInteger) 
+  -> Term s PInteger
+  -> Term s (PAsData PPOSIXTime)
   -> Term s PScriptContext
   -> TermCont s ()
-checkProposalDatum proposal proposalOutput quorum ctx = do
+checkProposalDatum proposal proposalOutput quorum duration startedAt ctx = do
   proposalOutDatum' <- pletC $ inlineDatumFromOutput # proposalOutput
   (proposalOutDatum, _) <- tcont $ ptryFrom @PProposalDatum proposalOutDatum'
   outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "applied"] proposalOutDatum
@@ -108,7 +112,7 @@ checkProposalDatum proposal proposalOutput quorum ctx = do
   pguardC "814" $ outDatum.applied #== pdata 0
   txInfo <- pletC $ pfield @"txInfo" # ctx
   checkIsSignedBy "805" (extractPaymentPkhFromAddress # outDatum.initiator) txInfo
-  -- checkPermittedDuration govInputDatum.minDuration govInputDatum.maxDuration startedAt outDatum.deadline
+  checkPermittedDuration duration startedAt outDatum.deadline
 
 checkProposalCanChangeProtocol :: 
   Term s PProtocol 
@@ -126,17 +130,16 @@ checkProposalCanChangeProtocol protocol proposal' ctx = do
     #&& protocolDatum.maxDuration #== proposal.maxDuration
     #&& protocolDatum.protocolFee #== proposal.protocolFee)
 
--- checkPermittedDuration ::
---   Term s PInteger ->
---   Term s PInteger ->
---   Term s (PAsData PPOSIXTime) ->
---   Term s (PAsData PPOSIXTime) ->
---   TermCont s ()
--- checkPermittedDuration minDurationMinutes maxDurationMinutes startedAt deadline = do
---   let minDuration = minutesToPosixDuration # minDurationMinutes # startedAt
---   let maxDuration = minutesToPosixDuration # maxDurationMinutes # startedAt
---   let permittedDuration = pinterval # minDuration # maxDuration
---   pguardC "1315" (pmember # deadline # permittedDuration)
+checkPermittedDuration ::
+  Term s PInteger ->
+  Term s (PAsData PPOSIXTime) ->
+  Term s (PAsData PPOSIXTime) ->
+  TermCont s ()
+checkPermittedDuration durationInMinutes startedAt deadline = do
+  let proposalDuration = pinterval # startedAt # deadline
+  let expectedEndTime = minutesToPosixDuration # durationInMinutes # startedAt
+  let expectedDuration = pinterval # startedAt # expectedEndTime
+  pguardC "1315" (proposalDuration #== expectedDuration)
 
 governanceThreadTokenName :: Term s PTokenName
 governanceThreadTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "DonatPoolGovernance")
