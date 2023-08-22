@@ -143,3 +143,10 @@ checkPermittedDuration durationInMinutes startedAt deadline = do
 
 governanceThreadTokenName :: Term s PTokenName
 governanceThreadTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "DonatPoolGovernance")
+
+getGovernanceDatumFromReferenceUtxo :: Term s (PCurrencySymbol :--> PScriptContext :--> PGovernanceDatum)
+getGovernanceDatumFromReferenceUtxo = phoistAcyclic $
+  plam $ \systemCurrency txInfo -> P.do
+    govInput <- plet $ getOnlyOneRefInputByToken # systemCurrency # governanceThreadTokenName # txInfo
+    (govDatum, _) <- ptryFrom @PGovernanceDatum $ inlineDatumFromOutput # govInput
+    govDatum

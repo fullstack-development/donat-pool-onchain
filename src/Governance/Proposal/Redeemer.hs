@@ -6,16 +6,20 @@ import Plutarch.Api.V2
 import Plutarch.DataRepr
 import Plutarch.Prelude
 
-type IsVoteFor = PInteger   -- "against" = 0, "for" = 1
-type Voter = PAddress
+type PIsVoteFor = PInteger   -- "against" = 0, "for" = 1
+type PAmount = PInteger
+type PVoter = PAddress
+type ProposalThreadCs = PCurrencySymbol
 
 data PProposalRedeemer (s :: S)
   = PVote
       ( Term
           s
           ( PDataRecord
-              '[ "_0" ':= IsVoteFor -- "against" = 0, "for" = 1,
-               , "_1" ':= Voter
+              '[ "_0" ':= PIsVoteFor -- "against" = 0, "for" = 1,
+               , "_1" ':= PAmount
+               , "_2" ':= PVoter
+               , "_3" ':= ProposalThreadCs
                ]
           )
       )
