@@ -22,7 +22,7 @@ type PVoteTokenName = PTokenName
 data PProposalPolicyRedeemer (s :: S)
   = PMintThreadToken (Term s (PDataRecord '["_0" ':= PTokenName]))
   | PBurnThreadToken (Term s (PDataRecord '["_0" ':= PTokenName]))
-  | PMintVoteToken (Term s (PDataRecord '["_0" ':= PVerCs, "_1" ':= PVote, "_2" ':= PAmount]))
+  | PMintVoteToken (Term s (PDataRecord '["_0" ':= PVerCs]))
   | PBurnVoteToken (Term s (PDataRecord '["_0" ':= PVoteTokenName, "_1" ':= PVerCs]))
   deriving stock (GHC.Generic)
   deriving anyclass (Generic)
@@ -50,10 +50,8 @@ proposalPolicy = plam $ \ref rdm' ctx -> P.do
         pure $ pconstant ()
     PMintVoteToken mintFields' -> popaque $
       unTermCont $ do
-        mintFields <- pletFieldsC @["_0", "_1", "_2"] mintFields'
-        voteTokenName <- pletC $ makeVoteTn # mintFields._1 # mintFields._2
-        checkMintingAmount 1 voteTokenName ctx
-        checkProposalTokensInInput mintFields._0 ctx
+        let verCs = pfield @"_0" # mintFields'
+        checkProposalTokensInInput verCs ctx
         pure $ pconstant ()
     PBurnVoteToken burnFields' -> popaque $
       unTermCont $ do
@@ -86,17 +84,3 @@ makeVoteTn  = phoistAcyclic $
         (plengthBS # tnBs #<= tokenNameSizeLimit)
         (pcon . PTokenName $ tnBs)
         (ptraceError "601")
-
--- parseVoteTokenName :: Term s (PByteString :--> PTuple PInteger PInteger)  -- Result: (Vote, Amount)
--- parseVoteTokenName = phoistAcyclic $
---   plam $ \tokenName -> P.do
---     length <- plet $ plengthBS # tokenName
---     pif (pnot #$ (psliceBS # 0 # 1 # tokenName) #== pconsBS # 118 # mempty) (ptraceError "602") $ P.do
---         voteSymbols <- plet $ countNotDotSymbols # (psliceBS # 1 # (length #- 1) # tokenName) # 0
---         voteDropped <- plet $ 1 #+ voteSymbols #+ 1
---         amountSymbols <- plet $ countNotDotSymbols # (psliceBS # voteDropped # (length #- voteDropped) # tokenName) # 0
---         vote <- plet $ bsToInteger # (psliceBS # 1 # voteSymbols # tokenName) # 0
---         amount <- plet $ bsToInteger # (psliceBS # voteDropped # amountSymbols # tokenName) # 0
---         ptuple # pdata vote # pdata amount
-
-

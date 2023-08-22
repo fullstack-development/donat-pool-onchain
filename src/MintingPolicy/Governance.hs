@@ -17,7 +17,7 @@ govTokenName :: Term s PTokenName
 govTokenName = pconstant . Plutus.TokenName $ Plutus.encodeUtf8 "DonatPool_governance_testnet"
 
 data GovernanceTokensRedeemer (s :: S)
-  = PMintGovernanceTokens (Term s (PDataRecord '["_0" ':= PInteger, "_1" ':= PPubKeyHash]))
+  = PMintGovernanceTokens (Term s (PDataRecord '[]))
   deriving stock (GHC.Generic)
   deriving anyclass (Generic)
   deriving anyclass (PlutusType, PIsData)
@@ -32,11 +32,7 @@ governancePolicy = plam $ \ref rdm' ctx -> P.do
   (rdm, _) <- ptryFrom @GovernanceTokensRedeemer rdm'
   txInfo <- plet $ pfield @"txInfo" # ctx
   pmatch rdm $ \case
-    PMintGovernanceTokens mintFields -> popaque $
+    PMintGovernanceTokens _ -> popaque $
       unTermCont $ do
-        amount <- pletC $ pfield @"_0" # mintFields
-        red <- pletFieldsC @["_0", "_1"] mintFields
         checkUTxOSpent ref ctx
-        checkMintingAmount red._0 govTokenName ctx
-        checkIsSignedBy "549" red._1 txInfo
         pure $ pconstant ()

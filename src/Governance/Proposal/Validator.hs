@@ -30,7 +30,7 @@ proposalValidator = phoistAcyclic $
     txInfo <- plet $ pfield @"txInfo" # ctx
     input <- plet $ getOwnInputOrTraceError # ctx
     inValue <- plet $ pfield @"value" # input
-    proposal <- pletFields @["protocolCurrency", "adaoCurrency", "verTokenCurrency"] proposal'
+    proposal <- pletFields @["protocolCurrency", "verTokenCurrency"] proposal'
     
     pmatch red $ \case
         PVote redData' -> popaque . unTermCont $ do
@@ -45,17 +45,18 @@ proposalValidator = phoistAcyclic $
 
             checkNftIsInValue "901" redData._3 proposalThreadTokenName inValue
             checkNftIsInValue "902" proposal.verTokenCurrency proposalVerTokenName inValue
+
             voterPkh <- pletC $ extractPaymentPkhFromAddress # redData._2
             checkIsSignedBy "903" voterPkh txInfo
+
             pguardC "912" $ inDatum.applied #== pdata 0
             checkVotedBeforeDeadline inDatum.deadline txInfo
-
             pguardC "904" $ inDatum.proposal #== outDatum.proposal
             pguardC "905" $ inDatum.policyRef #== outDatum.policyRef
             pguardC "906" $ inDatum.quorum #== outDatum.quorum
             pguardC "907" $ inDatum.initiator #== outDatum.initiator 
-            pguardC "908" $ inDatum.deadline #== outDatum.deadline --
-            pguardC "909" $ inDatum.applied #== outDatum.applied --
+            pguardC "908" $ inDatum.deadline #== outDatum.deadline
+            pguardC "909" $ inDatum.applied #== outDatum.applied
 
             for <- pletC $ integerToBool # redData._0
             checkVoteValuesInDatum for redData._1 inDatum.for outDatum.for inDatum.against outDatum.against
@@ -90,8 +91,8 @@ checkOutputValue inValue' outValue' protocolCs amount ctx = do
   outValue <- pletC $ Value.pforgetPositive outValue'
   govDatum' <- pletC $ getGovernanceDatumFromReferenceUtxo # protocolCs # ctx
   govDatum <- pletFieldsC @["govCurrency", "govTokenName"] govDatum'
-  expectedAdaoAdding <- pletC $ Value.psingleton # govDatum.govCurrency # govDatum.govTokenName # amount
-  expectedOutputValue <- pletC $ inValue <> expectedAdaoAdding <> minAdaValue
+  expectedGovTokensAmount <- pletC $ Value.psingleton # govDatum.govCurrency # govDatum.govTokenName # amount
+  expectedOutputValue <- pletC $ inValue <> expectedGovTokensAmount <> minAdaValue
   pguardC "910" (expectedOutputValue #== outValue)
 
 checkPaymentToVoter :: 
@@ -103,6 +104,7 @@ checkPaymentToVoter ::
   -> TermCont s ()
 checkPaymentToVoter pkh vote amount proposalCs txInfo = do
   voteTokenName <- pletC $ makeVoteTn # vote # amount
+  checkNftMinted "413" 1 proposalCs voteTokenName txInfo
   paymentToVoter <- pletC $ 
               Value.psingleton # proposalCs # voteTokenName # 1
                 <> minAdaValue
