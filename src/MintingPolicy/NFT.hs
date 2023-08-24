@@ -1,4 +1,4 @@
-module MintingPolicy.NFT (nftPolicy) where
+module MintingPolicy.NFT (nftPolicy, checkUTxOSpent) where
 
 import qualified GHC.Generics as GHC
 import Generics.SOP

@@ -8,6 +8,7 @@ import Plutarch.Api.V2
 import Plutarch.Extra.Maybe
 import qualified Plutarch.List as List
 import Plutarch.Prelude hiding (psingleton)
+import qualified Plutarch.Monadic as P
 
 type SortedPositiveValue = PValue 'Sorted 'Positive
 
@@ -147,6 +148,13 @@ getOnlyOneRefInputByToken = phoistAcyclic $
               PNil -> scriptTxOut
               _ -> ptraceError "311"
 
+
+getOnlyOneInputWithoutRef :: Term s (PScriptContext :--> PTxOut)
+getOnlyOneInputWithoutRef = phoistAcyclic $
+  plam $ \ctx ->
+    let inputs = getAllTxInputs # ctx
+     in getOnlyOneOutputFromList # inputs
+
 getAllTxOutputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
 getAllTxOutputs = phoistAcyclic $
   plam $ \ctx ->
@@ -187,3 +195,23 @@ extractPaymentPkhFromAddress = phoistAcyclic $
     pmatch (pfield @"credential" # address) $ \case
       PPubKeyCredential pkh -> pfield @"_0" # pkh
       _ -> ptraceError "312"
+
+getMintingTokenCurrency :: Term s (PScriptContext :--> PCurrencySymbol)
+getMintingTokenCurrency = phoistAcyclic $
+  plam $ \ctx -> P.do
+    purpose <- plet $ pfield @"purpose" # ctx
+    pmatch purpose $ \case
+      PMinting mintFlds -> pfield @"_0" # mintFlds
+      _ -> ptraceError "313"
+
+pubKeyOutputContainsValue :: Term s (PPubKeyHash :--> PAsData PTxInfo :--> PValue 'Sorted 'NonZero :--> PBool)
+pubKeyOutputContainsValue = phoistAcyclic $
+  plam $ \pkh txInfo value ->
+    let pkhOutputs = pubKeyOutputsAt # pkh # txInfo
+     in pany # (matches # value) # pkhOutputs
+  where
+    matches :: Term s (PValue 'Sorted 'NonZero :--> PTxOut :--> PBool)
+    matches = phoistAcyclic $
+      plam $ \value txOut ->
+        let txOutValue = Value.pforgetPositive $ pfield @"value" # txOut
+         in txOutValue #== value

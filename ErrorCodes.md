@@ -44,6 +44,7 @@
 310: No reference inputs with current threadToken found
 311: More than one reference inputs with current threadToken found
 312: Impossible to extract PubKeyHash from script credentials
+313: No minting performed in transaction
 
 ## Fundraising.Validator
 401: Fundraising datum change not expected while Donating
@@ -61,3 +62,48 @@
 413: should burn verToken on close fundraising
 414: should burn threadToken on close fundraising
 415: can't donate after fundrising deadline
+
+## Ext.Plutarch.Extra.Bool
+501: Can't parse integer to make Bool
+
+## MintingPolicy.Proposal
+601: Unexpected Vote token name length
+602: Vote token name first symbol must be 'v'
+
+## MintingPolicy.Governance
+701: Unexpected minting governance tokens transaction signer
+
+## Governance.Validator
+801: Governance ThreadToken missed in the CreateProposal transaction
+802: Protocol proposal doesn't contain any changes
+804: Proposal fee less than minAda
+805: Unexpected create proposal initiator
+806: Unexpected Ada value in output while proposal creation
+807: Unexpected non-Ada value in output while proposal creation
+808: Unexpected proposal in the output datum
+809: Unexpected quorum in the output datum
+810: Unexpected for and against values in tne output datum
+812: Governance datum shouldn't be changed during the Create Proposal transaction
+813: Governance value shouldn't be changed during the Create Proposal transaction
+814: New proposal shouldn't be applied
+815: Proposal duration is out of the range configured in governance
+816: should mint threadToken on create proposal
+817: should mint verToken on create proposal
+
+## Governance.Proposal.Validator
+901: No thread token in vault input
+902: No verification token in vault input
+903: Vote transaction is not signed by voter 
+904: Proposal should not be changed during the transaction
+905: Proposal PolicyRef should not be changed during the Vote transaction
+906: Proposal quorum should not be changed during the Vote transaction
+907: Proposal initiator should not be changed during the Vote transaction
+908: Unexpected votes number added in VoteFor case
+909: Unexpected votes number added in VoteAgainst case
+910: Unexpected out value during the Vote transaction
+911: Unexpected payment to the Voter during the Vote transaction
+912: Can't vote for applied proposal
+913: Can't vote after proposal deadline
+914: Proposal deadline should not be changed during the Vote transaction
+915: Proposal applied field value should not be changed during the Vote transaction
+916: Should mint Vote receipt during the vote transaction
