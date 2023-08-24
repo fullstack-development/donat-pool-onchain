@@ -31,7 +31,6 @@ governanceValidator = phoistAcyclic $
   plam $ \protocol dat' rdm' ctx -> P.do
     (dat, _) <- ptryFrom @PGovernanceDatum dat'
     (red, _) <- ptryFrom @PGovernanceRedeemer rdm'
-    txInfo <- plet $ pfield @"txInfo" # ctx
     input <- plet $ getOwnInputOrTraceError # ctx
     inValue <- plet $ pfield @"value" # input
     let systemCurrency = pfield @"protocolCurrency" # protocol
@@ -73,7 +72,8 @@ checkProposalOutput protocol ctx proposal proposalAddress threadCs verCs started
   checkProposalCanChangeProtocol protocol proposal ctx
   proposalOutput <- pletC $ getOutputByAddress # ctx # proposalAddress
   govInputDatum <- pletFieldsC @["quorum", "fee", "duration"] govInputDatum'
-  checkProposalValue proposalOutput govInputDatum.fee threadCs verCs
+  txInfo <- pletC $ pfield @"txInfo" # ctx
+  checkProposalValue proposalOutput govInputDatum.fee threadCs verCs txInfo
   checkProposalDatum proposal proposalOutput govInputDatum.quorum govInputDatum.duration startedAt ctx
 
 checkProposalValue :: 
@@ -81,8 +81,9 @@ checkProposalValue ::
   -> Term s PInteger
   -> Term s PCurrencySymbol
   -> Term s PCurrencySymbol
+  -> Term s (PAsData PTxInfo)
   -> TermCont s ()
-checkProposalValue proposalOutput fee threadCs verCs = do
+checkProposalValue proposalOutput fee threadCs verCs txInfo = do
   proposalOutValue <- pletC $ pfield @"value" # proposalOutput
   adaAmount <- pletC $ Value.plovelaceValueOf # proposalOutValue
   pguardC "804" $ minTxOut #<= fee
@@ -92,6 +93,8 @@ checkProposalValue proposalOutput fee threadCs verCs = do
     Value.psingleton # threadCs # proposalThreadTokenName # 1 
     <> Value.psingleton # verCs # proposalVerTokenName # 1
   pguardC "807" (outputNonAdaValue #== expectedTokensValue)
+  checkNftMinted "816" 1 threadCs proposalThreadTokenName txInfo
+  checkNftMinted "817" 1 verCs proposalVerTokenName txInfo
 
 checkProposalDatum :: 
   Term s PProposalParameters

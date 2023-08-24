@@ -87,6 +87,8 @@
 813: Governance value shouldn't be changed during the Create Proposal transaction
 814: New proposal shouldn't be applied
 815: Proposal duration is out of the range configured in governance
+816: should mint threadToken on create proposal
+817: should mint verToken on create proposal
 
 ## Governance.Proposal.Validator
 901: No thread token in vault input
@@ -102,5 +104,6 @@
 911: Unexpected payment to the Voter during the Vote transaction
 912: Can't vote for applied proposal
 913: Can't vote after proposal deadline
-908: Proposal deadline should not be changed during the Vote transaction
-909: Proposal applied field value should not be changed during the Vote transaction
+914: Proposal deadline should not be changed during the Vote transaction
+915: Proposal applied field value should not be changed during the Vote transaction
+916: Should mint Vote receipt during the vote transaction

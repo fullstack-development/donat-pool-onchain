@@ -55,8 +55,8 @@ proposalValidator = phoistAcyclic $
             pguardC "905" $ inDatum.policyRef #== outDatum.policyRef
             pguardC "906" $ inDatum.quorum #== outDatum.quorum
             pguardC "907" $ inDatum.initiator #== outDatum.initiator 
-            pguardC "908" $ inDatum.deadline #== outDatum.deadline
-            pguardC "909" $ inDatum.applied #== outDatum.applied
+            pguardC "914" $ inDatum.deadline #== outDatum.deadline
+            pguardC "915" $ inDatum.applied #== outDatum.applied
 
             for <- pletC $ integerToBool # redData._0
             checkVoteValuesInDatum for redData._1 inDatum.for outDatum.for inDatum.against outDatum.against
