@@ -94,6 +94,15 @@ library
     Ext.Plutarch.Extra.Time
     Ext.Plutus.MinAda
     Ext.Ply.Plutarch.TypedWriter
+    FeePool.Datum
+    FeePool.FeePoolInfo.Datum
+    FeePool.FeePoolInfo.Models
+    FeePool.FeePoolInfo.Redeemer
+    FeePool.Redeemer
+    Fundraising.Datum
+    Fundraising.Model
+    Fundraising.Redeemer
+    Fundraising.Validator
     Governance.Datum
     Governance.Proposal.Datum
     Governance.Proposal.Model
@@ -101,10 +110,6 @@ library
     Governance.Proposal.Validator
     Governance.Redeemer
     Governance.Validator
-    Fundraising.Datum
-    Fundraising.Model
-    Fundraising.Redeemer
-    Fundraising.Validator
     MintingPolicy.Governance
     MintingPolicy.NFT
     MintingPolicy.Proposal
