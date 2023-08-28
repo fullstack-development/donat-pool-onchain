@@ -98,7 +98,9 @@ library
     FeePool.FeePoolInfo.Datum
     FeePool.FeePoolInfo.Models
     FeePool.FeePoolInfo.Redeemer
+    FeePool.FeePoolInfo.Validator
     FeePool.Redeemer
+    FeePool.Validator
     Fundraising.Datum
     Fundraising.Model
     Fundraising.Redeemer
