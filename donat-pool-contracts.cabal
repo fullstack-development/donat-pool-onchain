@@ -96,9 +96,9 @@ library
     Ext.Ply.Plutarch.TypedWriter
     FeePool.Datum
     FeePool.FeePoolInfo.Datum
-    FeePool.FeePoolInfo.Models
     FeePool.FeePoolInfo.Redeemer
     FeePool.FeePoolInfo.Validator
+    FeePool.Models
     FeePool.Redeemer
     FeePool.Validator
     Fundraising.Datum

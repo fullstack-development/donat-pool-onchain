@@ -4,8 +4,9 @@ module FeePool.FeePoolInfo.Validator where
 
 import Ext.Plutarch.Extra.ApiV2
 import Ext.Plutus.MinAda
-import FeePool.FeePoolInfo.Models
+import FeePool.Models
 import FeePool.Validator (feePoolThreadTokenName)
+import MintingPolicy.VerToken
 import Plutarch.Api.V2
 import Plutarch.Extra.TermCont
 import qualified Plutarch.Monadic as P
@@ -14,9 +15,9 @@ import Protocol.Model
 import Shared.Checks
 import Shared.ScriptContextV2
 
-feePoolInfoValidator :: ClosedTerm (PFeePoolInfo :--> PValidator)
-feePoolInfoValidator = plam $ \feePoolInfo _ _ ctx -> P.do
-  infoFields <- pletFields @["protocol", "verTokenCurrency", "verTokenName"] feePoolInfo
+feePoolInfoValidator :: ClosedTerm (PFeePool :--> PValidator)
+feePoolInfoValidator = plam $ \feePool _ _ ctx -> P.do
+  infoFields <- pletFields @["protocol", "verTokenCurrency"] feePool
   protocolCurrency <- plet $ pfield @"protocolCurrency" # infoFields.protocol
   inputValue <- plet $ getOwnInputValue # ctx
   output <- plet $ getOnlyOneOwnOutput # ctx
@@ -24,6 +25,6 @@ feePoolInfoValidator = plam $ \feePoolInfo _ _ ctx -> P.do
   popaque . unTermCont $ do 
     checkNftIsInTxInput protocolCurrency feePoolThreadTokenName ctx
     pguardC "1001" (inputValue #== outputValue)
-    checkNftIsInValue "1002" infoFields.verTokenCurrency infoFields.verTokenName inputValue
+    checkNftIsInValue "1002" infoFields.verTokenCurrency feePoolVerTokenName inputValue
     -- output datum new record check is inside FeePool validator
     pure $ pconstant ()

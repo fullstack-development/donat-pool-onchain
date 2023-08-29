@@ -1,4 +1,4 @@
-module FeePool.FeePoolInfo.Models where
+module FeePool.Models where
 
 import qualified GHC.Generics as GHC
 import Plutarch.Api.V2
@@ -8,29 +8,28 @@ import PlutusLedgerApi.V2 (CurrencySymbol, TokenName)
 import Ply.Plutarch.Class
 import Protocol.Model
 
-data PFeePoolInfo (s :: S)
-  = PFeePoolInfo
+data PFeePool (s :: S)
+  = PFeePool
       ( Term
           s
           ( PDataRecord
               '[ "protocol" ':= PProtocol
                , "verTokenCurrency" ':= PCurrencySymbol
-               , "verTokenName" ':= PTokenName
                ]
           )
       )
   deriving stock (GHC.Generic)
   deriving anyclass (PlutusType, PIsData, PDataFields)
 
-instance DerivePlutusType PFeePoolInfo where
+instance DerivePlutusType PFeePool where
   type DPTStrat _ = PlutusTypeData
 
-instance PTryFrom PData (PAsData PFeePoolInfo)
+instance PTryFrom PData (PAsData PFeePool)
 
-data FeePoolInfo = FeePoolInfo
+data FeePool = FeePool
   { protocol :: Protocol
   , verTokenCurrency :: CurrencySymbol
   , verTokenName :: TokenName
   }
 
-type instance PlyArgOf PFeePoolInfo = FeePoolInfo
+type instance PlyArgOf PFeePool = FeePool
