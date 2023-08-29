@@ -44,10 +44,12 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
       checkDonatedBeforeDeadline datFields.frDeadline txInfo
       pure $ pconstant ()
     PReceiveFunds redData' -> popaque . unTermCont $ do
+      -- TODO: make different redeemers for receiveWithFees and receiveWithoutFees cases
+      -- TODO: check funds sent to FeePool in case of receiveWithFees redeemer
+      -- TODO: add check the FeePool utxo is in tx input in case of receiveWithFees redeemer
       redData <- pletFieldsC @["_0", "_1"] redData'
       raisedFunds <- pletC $ inputAda #- minTxOut #- minTxOut
       feePayment <- pletC $ calculateFees # datFields.frFee # raisedFunds
-      validInterval <- pletC $ pfrom # datFields.frDeadline
       checkNftIsInValue "409" frFields.verTokenCurrency frFields.verTokenName inputValue
       checkNftIsInValue "410" redData._0 redData._1 inputValue
       checkNoOutputs ctx

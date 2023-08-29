@@ -148,6 +148,12 @@ getOnlyOneRefInputByToken = phoistAcyclic $
               PNil -> scriptTxOut
               _ -> ptraceError "311"
 
+getOnlyOneInputByToken :: Term s (PCurrencySymbol :--> PTokenName :--> PScriptContext :--> PTxOut)
+getOnlyOneInputByToken = phoistAcyclic $
+  plam $ \cs tn ctx ->
+    let inputs = getAllTxInputs # ctx
+        inputsWithToken = pfilter # (outputContainsToken # cs # tn) # inputs
+     in getOnlyOneOutputFromList # inputsWithToken
 
 getOnlyOneInputWithoutRef :: Term s (PScriptContext :--> PTxOut)
 getOnlyOneInputWithoutRef = phoistAcyclic $
@@ -160,6 +166,13 @@ getAllTxOutputs = phoistAcyclic $
   plam $ \ctx ->
     let txInfo = pfield @"txInfo" # ctx
      in pfield @"outputs" # txInfo
+
+getOnlyOneOutputByToken :: Term s (PCurrencySymbol :--> PTokenName :--> PScriptContext :--> PTxOut)
+getOnlyOneOutputByToken = phoistAcyclic $
+  plam $ \cs tn ctx ->
+    let outputs = getAllTxOutputs # ctx
+        outputsWithToken = pfilter # (outputContainsToken # cs # tn) # outputs
+     in getOnlyOneOutputFromList # outputsWithToken
 
 getOutputByAddress :: Term s (PScriptContext :--> PAddress :--> PTxOut)
 getOutputByAddress = phoistAcyclic $

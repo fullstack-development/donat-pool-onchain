@@ -10,7 +10,8 @@ type DepositTime = PPOSIXTime
 type DepositAmount = PInteger
 
 data PFeePoolRedeemer (s :: S)
-  = PAddFunds (Term s (PDataRecord '["_0" ':= DepositTime, "_1" ':= DepositAmount]))
+  = PAddFundsWithCurrentEpoch (Term s (PDataRecord '["_0" ':= DepositTime, "_1" ':= DepositAmount]))
+  | PAddFundsWithNewEpoch (Term s (PDataRecord '["_0" ':= DepositTime, "_1" ':= DepositAmount]))
   | PPayRewards (Term s (PDataRecord '[])) -- not implemented for now
   deriving stock (Generic)
   deriving anyclass (PlutusType, PIsData)

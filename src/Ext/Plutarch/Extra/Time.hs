@@ -42,3 +42,11 @@ toEpoch = phoistAcyclic $
 toDayOfEpoch :: Term s (OrdinalDay :--> DayOfEpoch)
 toDayOfEpoch = phoistAcyclic $
   plam $ \ordinalDay -> pmod # ordinalDay # epochSize
+
+posixToEpoch :: Term s (PAsData PPOSIXTime :--> Epoch)
+posixToEpoch = phoistAcyclic $
+  plam $ \time -> toEpoch #$ toOrdinalDay # time
+
+posixToDayOfEpoch :: Term s (PAsData PPOSIXTime :--> DayOfEpoch)
+posixToDayOfEpoch = phoistAcyclic $
+  plam $ \time -> toDayOfEpoch #$ toOrdinalDay # time

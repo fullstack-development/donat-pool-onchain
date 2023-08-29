@@ -111,3 +111,11 @@
 ## FeePool & FeePoolInfo
 1001: Input value must be the same as output value while adding a record to FeePoolInfo
 1002: FeePoolInfo verification token missed in transaction input while adding new record to datum
+1003: FeePool thread token missed in transaction input
+1004: FeePool thread token missed in transaction output
+1005: FeePool datum mustn't change while adding funds with current epoch
+1006: Unexpected FeePool output value while receiving funds with current epoch
+1007: Incorrect timestamp provided while receiving funds with current epoch
+1008: Calculated epoch must be the same as current epoch while receiving funds with current epoch
+1009: Unexpected epoch in FeePoolInfo output datum while receiving funds with current epoch
+1010: Unexpected fee map in FeePoolInfo output datum while receiving funds with current epoch
