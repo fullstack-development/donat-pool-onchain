@@ -7,8 +7,8 @@ import qualified Plutarch.Api.V1.Value as Value
 import Plutarch.Api.V2
 import Plutarch.Extra.Maybe
 import qualified Plutarch.List as List
-import Plutarch.Prelude hiding (psingleton)
 import qualified Plutarch.Monadic as P
+import Plutarch.Prelude hiding (psingleton)
 
 type SortedPositiveValue = PValue 'Sorted 'Positive
 

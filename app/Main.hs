@@ -1,16 +1,18 @@
 module Main (main) where
 
 import Ext.Ply.Plutarch.TypedWriter
+import FeePool.FeePoolInfo.Validator (feePoolInfoValidator)
+import FeePool.Validator (feePoolValidator)
 import Fundraising.Validator (fundraisingValidator)
+import Governance.Proposal.Validator (proposalValidator)
+import Governance.Validator (governanceValidator)
+import MintingPolicy.Governance (governancePolicy)
 import MintingPolicy.NFT (nftPolicy)
+import MintingPolicy.Proposal (proposalPolicy)
 import MintingPolicy.VerToken (verTokenPolicy)
 import Plutarch
 import Ply.Plutarch
 import Protocol.Validator (protocolValidator)
-import Governance.Validator (governanceValidator)
-import Governance.Proposal.Validator (proposalValidator)
-import  MintingPolicy.Governance (governancePolicy)
-import MintingPolicy.Proposal (proposalPolicy)
 
 -- Compiles scripts and put them to files in the "compiled" folder
 main :: IO ()
@@ -47,3 +49,11 @@ main = do
     "Proposal Thread Minting Policy"
     "proposalPolicy.plutus"
     proposalPolicy
+  writeTypedScriptTraced
+    "FeePoolInfo validator"
+    "feePoolInfo.plutus"
+    feePoolInfoValidator
+  writeTypedScriptTraced
+    "FeePool validator"
+    "feePool.plutus"
+    feePoolValidator
