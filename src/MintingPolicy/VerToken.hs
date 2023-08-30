@@ -1,5 +1,6 @@
 module MintingPolicy.VerToken (verTokenPolicy, feePoolVerTokenName) where
 
+import FeePool.Models (feePoolThreadTokenName)
 import qualified GHC.Generics as GHC
 import Generics.SOP
 import Governance.Validator (governanceThreadTokenName)
@@ -19,6 +20,7 @@ data PVerTokenRedeemer (s :: S)
   = PMintVerToken (Term s (PDataRecord '["_0" ':= PTokenName]))
   | PBurnVerToken (Term s (PDataRecord '["_0" ':= PTokenName]))
   | PMintProposalVerToken (Term s (PDataRecord '["_0" ':= PTokenName]))
+  | PMintFeePoolVerToken (Term s (PDataRecord '[]))
   deriving stock (GHC.Generic)
   deriving anyclass (Generic)
   deriving anyclass (PlutusType, PIsData)
@@ -31,11 +33,11 @@ instance PTryFrom PData PVerTokenRedeemer
 verTokenPolicy :: ClosedTerm (PProtocol :--> PMintingPolicy)
 verTokenPolicy = plam $ \protocol rdm' ctx -> P.do
   (rdm, _) <- ptryFrom @PVerTokenRedeemer rdm'
+  protocolCurrency <- plet $ pfield @"protocolCurrency" # protocol
   pmatch rdm $ \case
     PMintVerToken mintFields -> popaque $
       unTermCont $ do
         let verTokenName = pfield @"_0" # mintFields
-            protocolCurrency = pfield @"protocolCurrency" # protocol
             protocolTokenName = pfield @"protocolTokenName" # protocol
         checkMintingAmount 1 verTokenName ctx
         checkNftIsInTxInput protocolCurrency protocolTokenName ctx
@@ -49,8 +51,12 @@ verTokenPolicy = plam $ \protocol rdm' ctx -> P.do
     PMintProposalVerToken mintFields -> popaque $
       unTermCont $ do
         let verTokenName = pfield @"_0" # mintFields
-            protocolCurrency = pfield @"protocolCurrency" # protocol
         checkMintingAmount 1 verTokenName ctx
         checkNftIsInTxInput protocolCurrency governanceThreadTokenName ctx
         checkNftIsInTxOutput protocolCurrency governanceThreadTokenName ctx
         pure $ pconstant ()
+    PMintFeePoolVerToken _ -> popaque . unTermCont $ do
+      checkMintingAmount 1 feePoolVerTokenName ctx
+      checkNftIsInTxInput protocolCurrency feePoolThreadTokenName ctx
+      checkNftIsInTxOutput protocolCurrency feePoolThreadTokenName ctx
+      pure $ pconstant ()
