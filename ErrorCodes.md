@@ -119,3 +119,13 @@
 1008: Calculated epoch must be the same as current epoch while receiving funds with current epoch
 1009: Unexpected epoch in FeePoolInfo output datum while receiving funds with current epoch
 1010: Unexpected fee map in FeePoolInfo output datum while receiving funds with current epoch
+1011: Unexpected epoch in FeePool output datum while receiving funds with new epoch
+1012: Calculated epoch must be equal to output epoch while receiving funds with new epoch
+1013: Calculated epoch must be different from input epoch while receiving funds with new epoch
+1014: Incorrect timestamp provided while receiving funds with new epoch
+1015: Payment to FeePool must be greater than minAda amount
+1016: Unexpected FeePool output value while receiving funds with new epoch
+1017: Unexpected epoch in FeePoolInfo output datum while receiving funds with new epoch
+1018: Unexpected fee map in FeePoolInfo output datum while receiving funds with new epoch
+1019: Unexpected FeePoolInfo output value while receiving funds with new epoch
+1020: FeePoolInfo verification token not minted while receiving funds with new epoch

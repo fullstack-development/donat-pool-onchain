@@ -4,9 +4,14 @@ import qualified GHC.Generics as GHC
 import Plutarch.Api.V2
 import Plutarch.DataRepr
 import Plutarch.Prelude
+import qualified PlutusLedgerApi.V1 as Plutus
 import PlutusLedgerApi.V2 (CurrencySymbol, TokenName)
+import qualified PlutusTx.Prelude as Plutus
 import Ply.Plutarch.Class
 import Protocol.Model
+
+feePoolThreadTokenName :: Term s PTokenName
+feePoolThreadTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "DonatPoolFeePool")
 
 data PFeePool (s :: S)
   = PFeePool

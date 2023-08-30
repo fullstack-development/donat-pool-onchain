@@ -5,7 +5,6 @@ module FeePool.FeePoolInfo.Validator where
 import Ext.Plutarch.Extra.ApiV2
 import Ext.Plutus.MinAda
 import FeePool.Models
-import FeePool.Validator (feePoolThreadTokenName)
 import MintingPolicy.VerToken
 import Plutarch.Api.V2
 import Plutarch.Extra.TermCont
