@@ -58,5 +58,4 @@ verTokenPolicy = plam $ \protocol rdm' ctx -> P.do
     PMintFeePoolVerToken _ -> popaque . unTermCont $ do
       checkMintingAmount 1 feePoolVerTokenName ctx
       checkNftIsInTxInput protocolCurrency feePoolThreadTokenName ctx
-      checkNftIsInTxOutput protocolCurrency feePoolThreadTokenName ctx
       pure $ pconstant ()

@@ -61,7 +61,12 @@
 412: Impossible to receive funds as fundraising is not completed
 413: should burn verToken on close fundraising
 414: should burn threadToken on close fundraising
-415: can't donate after fundrising deadline
+415: can't donate after fundraising deadline
+416: insufficient fee amount to pay to FeePool
+417: unexpected fee amount paid to FeePool
+418: minAda must be paid to FeePoolInfo
+419: fee amount must be less or equal to 2*minAda while receiving funds without fee
+
 
 ## Ext.Plutarch.Extra.Bool
 501: Can't parse integer to make Bool
