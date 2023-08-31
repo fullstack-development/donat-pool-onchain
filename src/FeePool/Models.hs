@@ -34,7 +34,6 @@ instance PTryFrom PData (PAsData PFeePool)
 data FeePool = FeePool
   { protocol :: Protocol
   , verTokenCurrency :: CurrencySymbol
-  , verTokenName :: TokenName
   }
 
 type instance PlyArgOf PFeePool = FeePool
