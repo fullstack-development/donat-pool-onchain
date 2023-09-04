@@ -13,13 +13,13 @@ data PFundraisingDatum (s :: S)
       ( Term
           s
           ( PDataRecord
-              '[ "creatorPkh" ':= PPubKeyHash
+              '[ "creator" ':= PAddress
                , "tokenOrigin" ':= PTxOutRef
                , "frTitle" ':= PByteString -- description length is limited by descStringSize
                , "frAmount" ':= PInteger
                , "frDeadline" ':= PPOSIXTime
                , "frFee" ':= PInteger
-               , "managerAddress" ':= PAddress
+               , "manager" ':= PAddress
                ]
           )
       )

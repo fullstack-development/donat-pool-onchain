@@ -28,7 +28,7 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
   inputValue <- plet $ getOwnInputValue # ctx
   inputAda <- plet $ plovelaceValueOf # inputValue
   txInfo <- plet $ getCtxInfoForSpending # ctx
-  datFields <- pletFields @["frDeadline", "frAmount", "creatorPkh", "managerAddress", "frFee"] dat
+  datFields <- pletFields @["frDeadline", "frAmount", "creator", "manager", "frFee"] dat
   protocolToken <- pletFields @["protocolCurrency", "protocolTokenName"] frFields.protocol
   pmatch red $ \case
     PDonate redData' -> popaque . unTermCont $ do
@@ -53,8 +53,8 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
       checkNoOutputs ctx
       checkNftMinted "413" (-1) frFields.verTokenCurrency frFields.verTokenName txInfo
       checkNftMinted "414" (-1) redData._0 redData._1 txInfo
-      checkIsSignedBy "411" datFields.creatorPkh txInfo
-      checkFeePaid datFields.managerAddress feePayment ctx
+      checkIsSignedBy "411" (extractPaymentPkhFromAddress # datFields.creator) txInfo
+      checkFeePaid datFields.manager feePayment ctx
       checkFundraisingCompleted datFields.frDeadline raisedFunds datFields.frAmount txInfo
       pure $ pconstant ()
 

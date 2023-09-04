@@ -40,7 +40,8 @@ protocolValidator = plam $ \protocol datm redm ctx -> P.do
       checkFrTokensMinted fundriseConfig txInfo
       checkFundriseOutputDatum dat fundriseConfig frOutDatum
       checkFundriseOutputValue fundriseConfig fundriseOutput
-      checkIsSignedBy "134" (pfield @"creatorPkh" # frOutDatum) txInfo
+      frCreator <- pletC $ pfield @"creator" # frOutDatum
+      checkIsSignedBy "134" (extractPaymentPkhFromAddress #frCreator) txInfo
       pure $ pconstant ()
     PCloseProtocol _ -> popaque . unTermCont $ do
       checkSignedByManager dat txInfo
@@ -99,7 +100,7 @@ checkFundriseOutputDatum ::
   Term s PFundraisingDatum ->
   TermCont s ()
 checkFundriseOutputDatum pDatum frConfig frOutDatum = do
-  frDatum <- pletFieldsC @["frTitle", "frAmount", "frDeadline", "managerAddress"] frOutDatum
+  frDatum <- pletFieldsC @["frTitle", "frAmount", "frDeadline", "manager"] frOutDatum
   startedAt <- pletC $ pfield @"startedAt" # frConfig
   protocolDatum <- pletFieldsC @["minAmount", "maxAmount", "minDuration", "maxDuration", "managerAddress", "protocolFee"] pDatum
   
@@ -110,7 +111,7 @@ checkFundriseOutputDatum pDatum frConfig frOutDatum = do
         #&& pfromData frDatum.frAmount #<= pfromData protocolDatum.maxAmount
     )
   checkPermittedDuration protocolDatum.minDuration protocolDatum.maxDuration startedAt frDatum.frDeadline
-  pguardC "127" (protocolDatum.managerAddress #== frDatum.managerAddress)
+  pguardC "127" (protocolDatum.managerAddress #== frDatum.manager)
   pguardC "133" (plengthBS # (pfromData frDatum.frTitle) #<= descStringSize)
 
 checkFundriseOutputValue :: Term s PFundriseConfig -> Term s PTxOut -> TermCont s ()
