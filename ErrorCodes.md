@@ -61,7 +61,12 @@
 412: Impossible to receive funds as fundraising is not completed
 413: should burn verToken on close fundraising
 414: should burn threadToken on close fundraising
-415: can't donate after fundrising deadline
+415: can't donate after fundraising deadline
+416: insufficient fee amount to pay to FeePool
+417: unexpected fee amount paid to FeePool
+418: minAda must be paid to FeePoolInfo
+419: fee amount must be less or equal to 2*minAda while receiving funds without fee
+
 
 ## Ext.Plutarch.Extra.Bool
 501: Can't parse integer to make Bool
@@ -107,3 +112,25 @@
 914: Proposal deadline should not be changed during the Vote transaction
 915: Proposal applied field value should not be changed during the Vote transaction
 916: Should mint Vote receipt during the vote transaction
+
+## FeePool & FeePoolInfo
+1001: Input value must be the same as output value while adding a record to FeePoolInfo
+1002: FeePoolInfo verification token missed in transaction input while adding new record to datum
+1003: FeePool thread token missed in transaction input
+1004: FeePool thread token missed in transaction output
+1005: FeePool datum mustn't change while adding funds with current epoch
+1006: Unexpected FeePool output value while receiving funds with current epoch
+1007: Incorrect timestamp provided while receiving funds with current epoch
+1008: Calculated epoch must be the same as current epoch while receiving funds with current epoch
+1009: Unexpected epoch in FeePoolInfo output datum while receiving funds with current epoch
+1010: Unexpected fee map in FeePoolInfo output datum while receiving funds with current epoch
+1011: Unexpected epoch in FeePool output datum while receiving funds with new epoch
+1012: Calculated epoch must be equal to output epoch while receiving funds with new epoch
+1013: Calculated epoch must be different from input epoch while receiving funds with new epoch
+1014: Incorrect timestamp provided while receiving funds with new epoch
+1015: Payment to FeePool must be greater than minAda amount
+1016: Unexpected FeePool output value while receiving funds with new epoch
+1017: Unexpected epoch in FeePoolInfo output datum while receiving funds with new epoch
+1018: Unexpected fee map in FeePoolInfo output datum while receiving funds with new epoch
+1019: Unexpected FeePoolInfo output value while receiving funds with new epoch
+1020: FeePoolInfo verification token not minted while receiving funds with new epoch

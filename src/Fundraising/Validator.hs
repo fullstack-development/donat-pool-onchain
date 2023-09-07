@@ -4,9 +4,11 @@ module Fundraising.Validator where
 
 import Ext.Plutarch.Extra.ApiV2
 import Ext.Plutus.MinAda
+import FeePool.Models
 import Fundraising.Datum
 import Fundraising.Model
 import Fundraising.Redeemer
+import MintingPolicy.VerToken (feePoolVerTokenName)
 import Plutarch.Api.V1.Value
 import Plutarch.Api.V2
 import Plutarch.Extra.Interval
@@ -30,6 +32,9 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
   txInfo <- plet $ getCtxInfoForSpending # ctx
   datFields <- pletFields @["frDeadline", "frAmount", "creatorPkh", "managerAddress", "frFee"] dat
   protocolToken <- pletFields @["protocolCurrency", "protocolTokenName"] frFields.protocol
+  twoMinAdaAmt <- plet $ minTxOut #+ minTxOut
+  raisedFunds <- plet $ inputAda #- twoMinAdaAmt
+  feeAmount <- plet $ calculateFees # datFields.frFee # raisedFunds
   pmatch red $ \case
     PDonate redData' -> popaque . unTermCont $ do
       output <- pletC $ getOnlyOneOwnOutput # ctx
@@ -43,19 +48,29 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
       checkNftIsInValue "408" redData._0 redData._1 outputValue
       checkDonatedBeforeDeadline datFields.frDeadline txInfo
       pure $ pconstant ()
-    PReceiveFunds redData' -> popaque . unTermCont $ do
+    
+    PReceiveFundsCurrentEpoch redData' -> popaque . unTermCont $ do
       redData <- pletFieldsC @["_0", "_1"] redData'
-      raisedFunds <- pletC $ inputAda #- minTxOut #- minTxOut
-      feePayment <- pletC $ calculateFees # datFields.frFee # raisedFunds
-      validInterval <- pletC $ pfrom # datFields.frDeadline
-      checkNftIsInValue "409" frFields.verTokenCurrency frFields.verTokenName inputValue
-      checkNftIsInValue "410" redData._0 redData._1 inputValue
-      checkNoOutputs ctx
-      checkNftMinted "413" (-1) frFields.verTokenCurrency frFields.verTokenName txInfo
-      checkNftMinted "414" (-1) redData._0 redData._1 txInfo
-      checkIsSignedBy "411" datFields.creatorPkh txInfo
-      checkFeePaid datFields.managerAddress feePayment ctx
+      pguardC "416" (twoMinAdaAmt #< feeAmount)
+      checkFeePaidCurrentEpoch protocolToken.protocolCurrency datFields.managerAddress feeAmount ctx
       checkFundraisingCompleted datFields.frDeadline raisedFunds datFields.frAmount txInfo
+      receiveFundsCommonChecks frFields.verTokenCurrency frFields.verTokenName redData._0 redData._1 inputValue datFields.creatorPkh ctx
+      pure $ pconstant ()
+    
+    PReceiveFundsNewEpoch redData' -> popaque . unTermCont $ do
+      redData <- pletFieldsC @["_0", "_1"] redData'
+      pguardC "416" (twoMinAdaAmt #< feeAmount)
+      checkFeePaidNewEpoch protocolToken.protocolCurrency frFields.verTokenCurrency datFields.managerAddress feeAmount ctx
+      checkFundraisingCompleted datFields.frDeadline raisedFunds datFields.frAmount txInfo
+      receiveFundsCommonChecks frFields.verTokenCurrency frFields.verTokenName redData._0 redData._1 inputValue datFields.creatorPkh ctx
+      pure $ pconstant ()
+    
+    PReceiveFundsWithoutFee redData' -> popaque . unTermCont $ do
+      redData <- pletFieldsC @["_0", "_1"] redData'
+      pguardC "419" (feeAmount #<= twoMinAdaAmt)
+      feePaidToManager datFields.managerAddress feeAmount ctx
+      checkFundraisingCompleted datFields.frDeadline raisedFunds datFields.frAmount txInfo
+      receiveFundsCommonChecks frFields.verTokenCurrency frFields.verTokenName redData._0 redData._1 inputValue datFields.creatorPkh ctx
       pure $ pconstant ()
 
 checkDonateDatum :: Term s PFundraisingDatum -> Term s PTxOut -> TermCont s ()
@@ -112,8 +127,49 @@ checkDonatedBeforeDeadline deadline txInfo = do
   donatedAfterDeadline <- pletC $ pafter # donatedAt # fundrisingInterval
   pguardC "415" $ pnot # donatedAfterDeadline
 
-checkFeePaid :: Term s (PAsData PAddress) -> Term s PInteger -> Term s PScriptContext -> TermCont s ()
-checkFeePaid managerAddress fee ctx = do
+feePaidToManager :: Term s (PAsData PAddress) -> Term s PInteger -> Term s PScriptContext -> TermCont s ()
+feePaidToManager managerAddress feeAmt ctx = do
   managerOutput <- pletC $ getOutputByAddress # ctx # (pfromData managerAddress)
   outputAda <- pletC $ plovelaceValueOf # (pfield @"value" # managerOutput)
-  pguardC "203" (outputAda #== fee)
+  pguardC "203" (outputAda #== feeAmt)
+
+feePaidToFeePool :: Term s PCurrencySymbol -> Term s PInteger -> Term s PScriptContext -> TermCont s ()
+feePaidToFeePool systemCurrency expectedFee ctx = do
+  feePoolInput <- pletC $ getOnlyOneInputByToken # systemCurrency # feePoolThreadTokenName # ctx
+  feePoolOutput <- pletC $ getOnlyOneOutputByToken # systemCurrency # feePoolThreadTokenName # ctx
+  feePoolInputAda <- pletC $ plovelaceValueOf # (pfield @"value" # feePoolInput)
+  feePoolOutputAda <- pletC $ plovelaceValueOf # (pfield @"value" # feePoolOutput)
+  expectedOutputAda <- pletC $ feePoolInputAda #+ expectedFee
+  pguardC "417" (feePoolOutputAda #== expectedOutputAda)
+
+checkFeePaidCurrentEpoch :: Term s PCurrencySymbol -> Term s (PAsData PAddress) -> Term s PInteger -> Term s PScriptContext -> TermCont s ()
+checkFeePaidCurrentEpoch systemCurrency managerAddress feeAmount ctx = do
+  feePaidToManager managerAddress minTxOut ctx
+  feePaidToFeePool systemCurrency (feeAmount #- minTxOut) ctx
+
+checkFeePaidNewEpoch :: Term s PCurrencySymbol -> Term s PCurrencySymbol -> Term s (PAsData PAddress) -> Term s PInteger -> Term s PScriptContext -> TermCont s ()
+checkFeePaidNewEpoch systemCurrency verTokenCurrency managerAddress feeAmount ctx = do
+  feePaidToManager managerAddress minTxOut ctx
+  feePaidToFeePool systemCurrency (feeAmount #- minTxOut #- minTxOut) ctx
+
+  feePoolInfoOutput <- pletC $ getOnlyOneOutputByToken # verTokenCurrency # feePoolVerTokenName # ctx
+  feePoolInfoOutputAda <- pletC $ plovelaceValueOf # (pfield @"value" # feePoolInfoOutput)
+  pguardC "418" (feePoolInfoOutputAda #== minTxOut)
+
+receiveFundsCommonChecks :: 
+  Term s PCurrencySymbol -> 
+  Term s PTokenName -> 
+  Term s PCurrencySymbol -> 
+  Term s PTokenName ->
+  Term s SortedPositiveValue ->
+  Term s PPubKeyHash ->
+  Term s PScriptContext -> 
+  TermCont s ()
+receiveFundsCommonChecks verTokenCurrency verTokenName threadTokenCurrency threadTokenName inputValue creatorPkh ctx = do
+  txInfo <- pletC $ getCtxInfoForSpending # ctx
+  checkNftIsInValue "409" verTokenCurrency verTokenName inputValue
+  checkNftIsInValue "410" threadTokenCurrency threadTokenName inputValue
+  checkNoOutputs ctx
+  checkNftMinted "413" (-1) verTokenCurrency verTokenName txInfo
+  checkNftMinted "414" (-1) threadTokenCurrency threadTokenName txInfo
+  checkIsSignedBy "411" creatorPkh txInfo

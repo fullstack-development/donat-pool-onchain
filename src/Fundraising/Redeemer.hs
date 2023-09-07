@@ -11,7 +11,9 @@ import Plutarch.Prelude
 -- _2 - amount ot donate in Ada - must be greater than minAda
 data PFundraisingRedeemer (s :: S)
   = PDonate (Term s (PDataRecord '["_0" ':= PCurrencySymbol, "_1" ':= PTokenName, "_2" ':= PInteger]))
-  | PReceiveFunds (Term s (PDataRecord '["_0" ':= PCurrencySymbol, "_1" ':= PTokenName]))
+  | PReceiveFundsCurrentEpoch (Term s (PDataRecord '["_0" ':= PCurrencySymbol, "_1" ':= PTokenName]))
+  | PReceiveFundsNewEpoch (Term s (PDataRecord '["_0" ':= PCurrencySymbol, "_1" ':= PTokenName]))
+  | PReceiveFundsWithoutFee (Term s (PDataRecord '["_0" ':= PCurrencySymbol, "_1" ':= PTokenName]))
   deriving stock (Generic)
   deriving anyclass (PlutusType, PIsData)
 
