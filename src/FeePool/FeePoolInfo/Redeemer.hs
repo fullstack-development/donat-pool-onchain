@@ -6,9 +6,6 @@ import Plutarch.Prelude
 import Protocol.Datum
 import Protocol.Model
 
-type DepositTime = PPOSIXTime
-type DepositAmount = PInteger
-
 data PFeePoolInfoRedeemer (s :: S)
   = PAddRecord (Term s (PDataRecord '[]))
   deriving stock (Generic)

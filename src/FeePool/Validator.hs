@@ -47,39 +47,35 @@ feePoolValidator = plam $ \feePool dtm rdm ctx -> P.do
       PAddFundsWithCurrentEpoch redData -> do
         pguardC "1005" (dat #== outputDatum)
 
-        redFields <- pletFieldsC @["_0", "_1"] redData  -- _0 - timestamp, _1 - ada amount        
-        payment <- pletC $ Value.psingleton # Value.padaSymbol # Value.padaToken # redFields._1
+        depositAmt <- pletC $ pfield @"_0" # redData  
+        payment <- pletC $ Value.psingleton # Value.padaSymbol # Value.padaToken # depositAmt
         expectedOutputValue <- pletC $ (Value.pforgetPositive inputValue) <> payment
         pguardC "1006" (Value.pforgetPositive outputValue #== expectedOutputValue)
-        pguardC "1015" (minTxOut #< redFields._1)
+        pguardC "1015" (minTxOut #< depositAmt)
 
-        receiveFundsTime <- pletC $ pfromData $ getLowerBoundTime # txRange
-        pguardC "1007" (redFields._0 #== receiveFundsTime)
-
-        calculatedEpoch <- pletC $ posixToEpoch # redFields._0
+        receiveFundsTime <- pletC $ getLowerBoundTime # txRange
+        calculatedEpoch <- pletC $ posixToEpoch # receiveFundsTime
         pguardC "1008" (calculatedEpoch #== inputEpoch)
 
-        dayOfEpoch <- pletC $ posixToDayOfEpoch # redFields._0
-        validateFeePoolInfoWithCurrentEpoch calculatedEpoch dayOfEpoch (pfromData redFields._1) feePoolFields.verTokenCurrency ctx
+        dayOfEpoch <- pletC $ posixToDayOfEpoch # receiveFundsTime
+        validateFeePoolInfoWithCurrentEpoch calculatedEpoch dayOfEpoch depositAmt feePoolFields.verTokenCurrency ctx
         pure $ pconstant ()
       
       PAddFundsWithNewEpoch redData -> do
-        redFields <- pletFieldsC @["_0", "_1"] redData  -- _0 - timestamp, _1 - ada amount
-        calculatedEpoch <- pletC $ posixToEpoch # redFields._0
+        depositAmt <- pletC $ pfield @"_0" # redData 
+        
+        receiveFundsTime <- pletC $ getLowerBoundTime # txRange
+        calculatedEpoch <- pletC $ posixToEpoch # receiveFundsTime
         pguardC "1012" (calculatedEpoch #== outputEpoch)
         pguardC "1013" (pnot #$ calculatedEpoch #== inputEpoch)
-        
-        receiveFundsTime <- pletC $ pfromData $ getLowerBoundTime # txRange
-        pguardC "1014" (redFields._0 #== receiveFundsTime)
 
-        pguardC "1015" (minTxOut #< redFields._1)
-        adaFeeAmount <- pletC $ redFields._1 #- minTxOut
-        paymentToFeePool <- pletC $ Value.psingleton # Value.padaSymbol # Value.padaToken # adaFeeAmount
+        pguardC "1015" (minTxOut #< depositAmt)
+        paymentToFeePool <- pletC $ Value.psingleton # Value.padaSymbol # Value.padaToken # depositAmt
         expectedOutputValue <- pletC $ (Value.pforgetPositive inputValue) <> paymentToFeePool
         pguardC "1016" (Value.pforgetPositive outputValue #== expectedOutputValue)
         
-        dayOfEpoch <- pletC $ posixToDayOfEpoch # redFields._0
-        validateFeePoolInfoWithNewEpoch calculatedEpoch dayOfEpoch adaFeeAmount feePoolFields.verTokenCurrency ctx
+        dayOfEpoch <- pletC $ posixToDayOfEpoch # receiveFundsTime
+        validateFeePoolInfoWithNewEpoch calculatedEpoch dayOfEpoch depositAmt feePoolFields.verTokenCurrency ctx
               
         pure $ pconstant ()
       PPayRewards _ -> pure $ ptraceError "not implemented"
@@ -130,4 +126,4 @@ validateFeePoolInfoWithNewEpoch epoch dayOfEpoch feeAmount verTokenCurrency ctx 
   pguardC "1019" (Value.pforgetPositive outputValue #== expectedOutputValue)
 
   txInfo <- pletC $ getCtxInfoForSpending # ctx
-  checkNftMinted "1020" (-1) verTokenCurrency feePoolVerTokenName txInfo
+  checkNftMinted "1020" (1) verTokenCurrency feePoolVerTokenName txInfo

@@ -65,9 +65,12 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
       receiveFundsCommonChecks frFields.verTokenCurrency frFields.verTokenName redData._0 redData._1 inputValue datFields.creatorPkh ctx
       pure $ pconstant ()
     
-    PReceiveFundsWithoutFee _ -> popaque . unTermCont $ do
+    PReceiveFundsWithoutFee redData' -> popaque . unTermCont $ do
+      redData <- pletFieldsC @["_0", "_1"] redData'
       pguardC "419" (feeAmount #<= twoMinAdaAmt)
-      feePaidToManager datFields.managerAddress feeAmount ctx 
+      feePaidToManager datFields.managerAddress feeAmount ctx
+      checkFundraisingCompleted datFields.frDeadline raisedFunds datFields.frAmount txInfo
+      receiveFundsCommonChecks frFields.verTokenCurrency frFields.verTokenName redData._0 redData._1 inputValue datFields.creatorPkh ctx
       pure $ pconstant ()
 
 checkDonateDatum :: Term s PFundraisingDatum -> Term s PTxOut -> TermCont s ()
