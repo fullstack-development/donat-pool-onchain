@@ -113,7 +113,7 @@
 915: Proposal applied field value should not be changed during the Vote transaction
 916: Should mint Vote receipt during the vote transaction
 
-## FeePool & FeePoolInfo
+## FeePool.Validator & FeePool.FeePoolInfo.Validator
 1001: Input value must be the same as output value while adding a record to FeePoolInfo
 1002: FeePoolInfo verification token missed in transaction input while adding new record to datum
 1003: FeePool thread token missed in transaction input

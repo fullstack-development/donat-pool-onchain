@@ -14,7 +14,7 @@ import Protocol.Model
 import Shared.Checks (checkMintingAmount, checkNftIsInTxInput, checkNftIsInTxOutput)
 
 feePoolVerTokenName :: Term s PTokenName
-feePoolVerTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "FeePoolVerToken")
+feePoolVerTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "FeePoolInfoVerToken")
 
 data PVerTokenRedeemer (s :: S)
   = PMintVerToken (Term s (PDataRecord '["_0" ':= PTokenName]))
