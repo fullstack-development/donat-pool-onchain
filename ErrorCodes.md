@@ -85,7 +85,7 @@
 810: Unexpected for and against values in tne output datum
 812: Governance datum shouldn't be changed during the Create Proposal transaction
 813: Governance value shouldn't be changed during the Create Proposal transaction
-814: New proposal shouldn't be applied
+814: New proposal shouldn't be processed
 815: Proposal duration is out of the range configured in governance
 816: should mint threadToken on create proposal
 817: should mint verToken on create proposal
@@ -102,8 +102,8 @@
 909: Unexpected votes number added in VoteAgainst case
 910: Unexpected out value during the Vote transaction
 911: Unexpected payment to the Voter during the Vote transaction
-912: Can't vote for applied proposal
+912: Can't vote for processed proposal
 913: Can't vote after proposal deadline
 914: Proposal deadline should not be changed during the Vote transaction
-915: Proposal applied field value should not be changed during the Vote transaction
+915: Proposal processed field value should not be changed during the Vote transaction
 916: Should mint Vote receipt during the vote transaction

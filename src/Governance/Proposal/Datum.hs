@@ -23,7 +23,7 @@ data PProposalDatum (s :: S)
                , "quorum" ':= PInteger
                , "initiator" ':= PAddress
                , "deadline" ':= PPOSIXTime
-               , "applied" ':= PInteger  -- Bool
+               , "processed" ':= PInteger  -- Bool
                ]
           )
         )

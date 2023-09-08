@@ -35,12 +35,12 @@ proposalValidator = phoistAcyclic $
     pmatch red $ \case
         PVote redData' -> popaque . unTermCont $ do
             redData <- pletFieldsC @["_0", "_1", "_2", "_3"] redData' -- isVoteFor (0/1), Amount, VoterAddress, ProposalThreadTn
-            inDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "applied"] dat
+            inDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "processed"] dat
             
             proposalOutput <- pletC $ getOnlyOneOwnOutput # ctx
             outputDatum' <- pletC $ inlineDatumFromOutput # proposalOutput
             (outputDatum, _) <- tcont $ ptryFrom @PProposalDatum outputDatum'
-            outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "applied"] outputDatum
+            outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "processed"] outputDatum
             outValue <- pletC $ pfield @"value" # proposalOutput
 
             checkNftIsInValue "901" redData._3 proposalThreadTokenName inValue
@@ -49,14 +49,14 @@ proposalValidator = phoistAcyclic $
             voterPkh <- pletC $ extractPaymentPkhFromAddress # redData._2
             checkIsSignedBy "903" voterPkh txInfo
 
-            pguardC "912" $ inDatum.applied #== pdata 0
+            pguardC "912" $ inDatum.processed #== pdata 0
             checkVotedBeforeDeadline inDatum.deadline txInfo
             pguardC "904" $ inDatum.proposal #== outDatum.proposal
             pguardC "905" $ inDatum.policyRef #== outDatum.policyRef
             pguardC "906" $ inDatum.quorum #== outDatum.quorum
             pguardC "907" $ inDatum.initiator #== outDatum.initiator 
             pguardC "914" $ inDatum.deadline #== outDatum.deadline
-            pguardC "915" $ inDatum.applied #== outDatum.applied
+            pguardC "915" $ inDatum.processed #== outDatum.processed
 
             for <- pletC $ integerToBool # redData._0
             checkVoteValuesInDatum for redData._1 inDatum.for outDatum.for inDatum.against outDatum.against

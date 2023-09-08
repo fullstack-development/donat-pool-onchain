@@ -107,12 +107,12 @@ checkProposalDatum ::
 checkProposalDatum proposal proposalOutput quorum duration startedAt ctx = do
   proposalOutDatum' <- pletC $ inlineDatumFromOutput # proposalOutput
   (proposalOutDatum, _) <- tcont $ ptryFrom @PProposalDatum proposalOutDatum'
-  outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "applied"] proposalOutDatum
+  outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "processed"] proposalOutDatum
   pguardC "808" $ outDatum.proposal #== proposal
   pguardC "809" $ outDatum.quorum #== quorum
   pguardC "810" $ (outDatum.for #== pdata 0) #&& (outDatum.against #== pdata 0)
   checkUTxOSpent outDatum.policyRef ctx
-  pguardC "814" $ outDatum.applied #== pdata 0
+  pguardC "814" $ outDatum.processed #== pdata 0
   txInfo <- pletC $ pfield @"txInfo" # ctx
   checkIsSignedBy "805" (extractPaymentPkhFromAddress # outDatum.initiator) txInfo
   checkPermittedDuration duration startedAt outDatum.deadline
