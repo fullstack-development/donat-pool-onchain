@@ -54,7 +54,7 @@ fundraisingValidator = plam $ \fundraising datm redm ctx -> P.do
       checkNftMinted "413" (-1) frFields.verTokenCurrency frFields.verTokenName txInfo
       checkNftMinted "414" (-1) redData._0 redData._1 txInfo
       checkIsSignedBy "411" datFields.creatorPkh txInfo
-      checkFeePaid datFields.managerAddress feePayment ctx
+      checkPaidToWalletAddress datFields.managerAddress feePayment ctx
       checkFundraisingCompleted datFields.frDeadline raisedFunds datFields.frAmount txInfo
       pure $ pconstant ()
 
@@ -111,9 +111,3 @@ checkDonatedBeforeDeadline deadline txInfo = do
   fundrisingInterval <- pletC $ pto # deadline
   donatedAfterDeadline <- pletC $ pafter # donatedAt # fundrisingInterval
   pguardC "415" $ pnot # donatedAfterDeadline
-
-checkFeePaid :: Term s (PAsData PAddress) -> Term s PInteger -> Term s PScriptContext -> TermCont s ()
-checkFeePaid managerAddress fee ctx = do
-  managerOutput <- pletC $ getOutputByAddress # ctx # (pfromData managerAddress)
-  outputAda <- pletC $ plovelaceValueOf # (pfield @"value" # managerOutput)
-  pguardC "203" (outputAda #== fee)

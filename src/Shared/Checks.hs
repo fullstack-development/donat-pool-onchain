@@ -84,3 +84,9 @@ checkPermittedDuration minDurationMinutes maxDurationMinutes startedAt deadline 
   let maxDuration = minutesToPosixDuration # maxDurationMinutes # startedAt
   let permittedDuration = pinterval # minDuration # maxDuration
   pguardC "126" (pmember # deadline # permittedDuration)
+
+checkPaidToWalletAddress :: Term s PAddress -> Term s PInteger -> Term s PScriptContext -> TermCont s ()
+checkPaidToWalletAddress walletAddress adaPaymentAmount ctx = do
+  walletOutput <- pletC $ getOutputByAddress # ctx # walletAddress
+  outputAda <- pletC $ plovelaceValueOf # (pfield @"value" # walletOutput)
+  pguardC "203" (outputAda #== adaPaymentAmount)

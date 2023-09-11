@@ -74,7 +74,7 @@ checkProposalOutput protocol ctx proposal proposalAddress threadCs verCs started
   govInputDatum <- pletFieldsC @["quorum", "fee", "duration"] govInputDatum'
   txInfo <- pletC $ pfield @"txInfo" # ctx
   checkProposalValue proposalOutput govInputDatum.fee threadCs verCs txInfo
-  checkProposalDatum proposal proposalOutput govInputDatum.quorum govInputDatum.duration startedAt ctx
+  checkProposalDatum proposal proposalOutput govInputDatum.quorum govInputDatum.duration govInputDatum.fee startedAt ctx
 
 checkProposalValue :: 
   Term s PTxOut
@@ -101,13 +101,14 @@ checkProposalDatum ::
   -> Term s PTxOut 
   -> Term s (PAsData PInteger) 
   -> Term s PInteger
+  -> Term s PInteger
   -> Term s (PAsData PPOSIXTime)
   -> Term s PScriptContext
   -> TermCont s ()
-checkProposalDatum proposal proposalOutput quorum duration startedAt ctx = do
+checkProposalDatum proposal proposalOutput quorum duration fee startedAt ctx = do
   proposalOutDatum' <- pletC $ inlineDatumFromOutput # proposalOutput
   (proposalOutDatum, _) <- tcont $ ptryFrom @PProposalDatum proposalOutDatum'
-  outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "processed"] proposalOutDatum
+  outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "cost", "deadline", "processed"] proposalOutDatum
   pguardC "808" $ outDatum.proposal #== proposal
   pguardC "809" $ outDatum.quorum #== quorum
   pguardC "810" $ (outDatum.for #== pdata 0) #&& (outDatum.against #== pdata 0)
@@ -115,6 +116,7 @@ checkProposalDatum proposal proposalOutput quorum duration startedAt ctx = do
   pguardC "814" $ outDatum.processed #== pdata 0
   txInfo <- pletC $ pfield @"txInfo" # ctx
   checkIsSignedBy "805" (extractPaymentPkhFromAddress # outDatum.initiator) txInfo
+  pguardC "818" $ outDatum.cost #== fee
   checkPermittedDuration duration startedAt outDatum.deadline
 
 checkProposalCanChangeProtocol :: 

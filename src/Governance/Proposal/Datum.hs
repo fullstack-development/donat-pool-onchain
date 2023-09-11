@@ -22,6 +22,7 @@ data PProposalDatum (s :: S)
                , "policyRef" ':= PTxOutRef
                , "quorum" ':= PInteger
                , "initiator" ':= PAddress
+               , "cost" ':= PInteger 
                , "deadline" ':= PPOSIXTime
                , "processed" ':= PInteger  -- Bool
                ]

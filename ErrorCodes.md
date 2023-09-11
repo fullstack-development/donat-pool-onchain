@@ -87,8 +87,9 @@
 813: Governance value shouldn't be changed during the Create Proposal transaction
 814: New proposal shouldn't be processed
 815: Proposal duration is out of the range configured in governance
-816: should mint threadToken on create proposal
-817: should mint verToken on create proposal
+816: Should mint threadToken on create proposal
+817: Should mint verToken on create proposal
+818: Unexpected proposal cost in the output datum
 
 ## Governance.Proposal.Validator
 901: No thread token in proposal input
@@ -109,5 +110,7 @@
 916: Should mint Vote receipt during the vote transaction
 917: Value shouldn't change during MarkAsProcessed transaction
 918: Can't start process proposal before proposal deadline
-919: PMarkAsProcessed - is unexpected redeemer for proposal that should be applied
-920: PMarkAsProcessed should be signed by manager
+919: PRejectProposal - is unexpected redeemer for proposal that should be applied
+920: PRejectProposal should be signed by manager
+921: Proposal cost should not be changed
+922: Proposal cost should be seized in case when failed to reach a quorum
