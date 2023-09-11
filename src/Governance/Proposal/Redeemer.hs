@@ -23,8 +23,9 @@ data PProposalRedeemer (s :: S)
                ]
           )
       )
+    | PMarkAsProcessed (Term s (PDataRecord '["_0" ':= ProposalThreadCs]))
   deriving stock (GHC.Generic)
-  deriving anyclass (PlutusType, PIsData, PDataFields)
+  deriving anyclass (PlutusType, PIsData)
 
 instance DerivePlutusType PProposalRedeemer where
   type DPTStrat _ = PlutusTypeData

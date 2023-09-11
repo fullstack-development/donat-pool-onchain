@@ -11,7 +11,7 @@ import qualified Plutarch.Monadic as P
 import Shared.Checks (checkNftIsInValue, checkIsSignedBy, checkNftMinted, checkNoOutputs)
 import Shared.ScriptContextV2
 import Governance.Datum (PGovernanceDatum(PGovernanceDatum))
-import Governance.Proposal.Redeemer ( PProposalRedeemer (PVote))
+import Governance.Proposal.Redeemer ( PProposalRedeemer (..))
 import Data.Data
 import PlutusLedgerApi.V1 (PubKeyHash)
 import Governance.Proposal.Model (PProposal, proposalThreadTokenName, proposalVerTokenName)
@@ -21,6 +21,8 @@ import Governance.Proposal.Datum (PProposalDatum(PProposalDatum))
 import Ext.Plutarch.Extra.Bool (integerToBool)
 import Governance.Validator (getGovernanceDatumFromReferenceUtxo)
 import MintingPolicy.Proposal (makeVoteTn)
+import Protocol.Model (PProtocol (..), Protocol (protocolCurrency))
+import Protocol.Validator (getProtocolDatumFromReferenceUtxoByToken)
 
 proposalValidator :: ClosedTerm (PProposal :--> PValidator)
 proposalValidator = phoistAcyclic $
@@ -30,7 +32,7 @@ proposalValidator = phoistAcyclic $
     txInfo <- plet $ pfield @"txInfo" # ctx
     input <- plet $ getOwnInputOrTraceError # ctx
     inValue <- plet $ pfield @"value" # input
-    proposal <- pletFields @["protocolCurrency", "verTokenCurrency"] proposal'
+    proposal <- pletFields @["protocolCurrency", "protocolTokenName", "verTokenCurrency"] proposal'
     
     pmatch red $ \case
         PVote redData' -> popaque . unTermCont $ do
@@ -62,6 +64,35 @@ proposalValidator = phoistAcyclic $
             checkVoteValuesInDatum for redData._1 inDatum.for outDatum.for inDatum.against outDatum.against
             checkOutputValue inValue outValue proposal.protocolCurrency redData._1 ctx
             checkPaymentToVoter voterPkh redData._0 redData._1 redData._3 txInfo
+            pure $ pconstant ()
+
+        PMarkAsProcessed redData' -> popaque . unTermCont $ do
+            threadCs <- pletC $ pfield @"_0"#  redData'
+            inDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "processed"] dat
+            
+            proposalOutput <- pletC $ getOnlyOneOwnOutput # ctx
+            outputDatum' <- pletC $ inlineDatumFromOutput # proposalOutput
+            (outputDatum, _) <- tcont $ ptryFrom @PProposalDatum outputDatum'
+            outDatum <- pletFieldsC @["proposal", "for", "against", "policyRef", "quorum", "initiator", "deadline", "processed"] outputDatum
+            outValue <- pletC $ pfield @"value" # proposalOutput
+
+            checkNftIsInValue "901" threadCs proposalThreadTokenName inValue
+            checkNftIsInValue "902" proposal.verTokenCurrency proposalVerTokenName inValue
+            pguardC "917" $ inValue #== outValue
+
+            checkStartProcessAfterDeadline inDatum.deadline txInfo
+            pguardC "919" $ pnot #$ shouldApplyVotingResults # outDatum.quorum # outDatum.for # outDatum.against
+
+            pguardC "904" $ inDatum.proposal #== outDatum.proposal
+            pguardC "906" $ inDatum.for #== outDatum.for
+            pguardC "906" $ inDatum.against #== outDatum.against
+            pguardC "905" $ inDatum.policyRef #== outDatum.policyRef
+            pguardC "906" $ inDatum.quorum #== outDatum.quorum
+            pguardC "907" $ inDatum.initiator #== outDatum.initiator 
+            pguardC "914" $ inDatum.deadline #== outDatum.deadline
+            pguardC "912" $ inDatum.processed #== pdata 1
+
+            checkManagerSignedTx proposal.protocolCurrency proposal.protocolTokenName ctx txInfo
             pure $ pconstant ()
 
 checkVoteValuesInDatum :: 
@@ -117,3 +148,27 @@ checkVotedBeforeDeadline deadline txInfo = do
   proposalInterval <- pletC $ pto # deadline
   votedAfterDeadline <- pletC $ pafter # votedAt # proposalInterval
   pguardC "913" $ pnot # votedAfterDeadline
+
+checkStartProcessAfterDeadline :: Term s (PAsData PPOSIXTime) -> Term s (PAsData PTxInfo) -> TermCont s ()
+checkStartProcessAfterDeadline deadline txInfo = do
+  txRange <- pletC $ pfield @"validRange" # txInfo
+  startProcessAt <- pletC $ pfromData $ getLowerBoundTime # txRange
+  proposalInterval <- pletC $ pto # deadline
+  startedProcessAfterDeadline <- pletC $ pafter # startProcessAt # proposalInterval
+  pguardC "913" startedProcessAfterDeadline
+
+shouldApplyVotingResults :: Term s (PInteger :--> PInteger :--> PInteger :--> PBool) 
+shouldApplyVotingResults = plam $ \quorum for against ->
+    quorum #<= (for #+ against) #&& against #< for
+
+checkManagerSignedTx :: 
+  Term s PCurrencySymbol 
+  -> Term s PTokenName
+  -> Term s PScriptContext
+  -> Term s (PAsData PTxInfo) 
+  -> TermCont s ()
+checkManagerSignedTx protocolCurrency protocolTokenName ctx txInfo = do
+  protocolDatum' <- pletC $ getProtocolDatumFromReferenceUtxoByToken # protocolCurrency # protocolTokenName # ctx
+  managerAddress <- pletC $ pfield @"managerAddress" # protocolDatum'
+  managerPkh <- pletC $ extractPaymentPkhFromAddress # managerAddress
+  checkIsSignedBy "920" managerPkh txInfo

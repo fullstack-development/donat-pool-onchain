@@ -125,6 +125,11 @@ getProtocolDatumFromReferenceUtxo :: Term s (PProtocol :--> PScriptContext :--> 
 getProtocolDatumFromReferenceUtxo = phoistAcyclic $
   plam $ \protocolToken ctx -> P.do
     token <- pletFields @["protocolCurrency", "protocolTokenName"] protocolToken
-    protocolInput <- plet $ getOnlyOneRefInputByToken # token.protocolCurrency # token.protocolTokenName # ctx
+    getProtocolDatumFromReferenceUtxoByToken # token.protocolCurrency # token.protocolTokenName # ctx
+    
+getProtocolDatumFromReferenceUtxoByToken :: Term s (PCurrencySymbol :--> PTokenName :--> PScriptContext :--> PProtocolDatum)
+getProtocolDatumFromReferenceUtxoByToken = phoistAcyclic $
+  plam $ \protocolCs protocolTn ctx -> P.do
+    protocolInput <- plet $ getOnlyOneRefInputByToken # protocolCs # protocolTn # ctx
     (protocolDatum, _) <- ptryFrom @PProtocolDatum $ inlineDatumFromOutput # protocolInput
     protocolDatum

@@ -91,8 +91,8 @@
 817: should mint verToken on create proposal
 
 ## Governance.Proposal.Validator
-901: No thread token in vault input
-902: No verification token in vault input
+901: No thread token in proposal input
+902: No verification token in proposal input
 903: Vote transaction is not signed by voter 
 904: Proposal should not be changed during the transaction
 905: Proposal PolicyRef should not be changed during the Vote transaction
@@ -107,3 +107,7 @@
 914: Proposal deadline should not be changed during the Vote transaction
 915: Proposal processed field value should not be changed during the Vote transaction
 916: Should mint Vote receipt during the vote transaction
+917: Value shouldn't change during MarkAsProcessed transaction
+918: Can't start process proposal before proposal deadline
+919: PMarkAsProcessed - is unexpected redeemer for proposal that should be applied
+920: PMarkAsProcessed should be signed by manager
