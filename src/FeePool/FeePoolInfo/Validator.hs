@@ -2,15 +2,12 @@
 
 module FeePool.FeePoolInfo.Validator where
 
-import Ext.Plutarch.Extra.ApiV2
-import Ext.Plutus.MinAda
-import FeePool.Models
-import MintingPolicy.VerToken
+import FeePool.Models (PFeePool, feePoolThreadTokenName)
+import MintingPolicy.VerToken (feePoolVerTokenName)
 import Plutarch.Api.V2
 import Plutarch.Extra.TermCont
 import qualified Plutarch.Monadic as P
 import Plutarch.Prelude
-import Protocol.Model
 import Shared.Checks
 import Shared.ScriptContextV2
 
