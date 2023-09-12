@@ -122,6 +122,13 @@ library
     Protocol.Validator
     Shared.Checks
     Shared.ScriptContextV2
+    StakingPool.Datum
+    StakingPool.Models
+    StakingPool.Redeemer
+    StakingPool.StakingPoolInfo.Datum
+    StakingPool.StakingPoolInfo.Redeemer
+    StakingPool.StakingPoolInfo.Validator
+    StakingPool.Validator
 
 executable compile
   import:         common-lang
