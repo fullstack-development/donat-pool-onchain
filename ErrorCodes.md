@@ -108,9 +108,18 @@
 914: Proposal deadline should not be changed during the Vote transaction
 915: Proposal processed field value should not be changed during the Vote transaction
 916: Should mint Vote receipt during the vote transaction
-917: Value shouldn't change during MarkAsProcessed transaction
+917: Value shouldn't change during the reject with reached quorum transaction
 918: Can't start process proposal before proposal deadline
 919: PRejectProposal - is unexpected redeemer for proposal that should be applied
-920: PRejectProposal should be signed by manager
+920: Apply/reject voting result should be signed by manager
 921: Proposal cost should not be changed
 922: Proposal cost should be seized in case when failed to reach a quorum
+923: Proposal shouldn't be changed during the apply/reject voting result
+924: For shouldn't be changed during the apply/reject voting result
+925: Against shouldn't be changed during the apply/reject voting result
+926: PolicyRef shouldn't be changed during the apply/reject voting result
+927: Quorum shouldn't be changed during the apply/reject voting result
+928: Initiator shouldn't be changed during the apply/reject voting result
+929: Deadline shouldn't be changed during the apply/reject voting result
+930: Proposal should be marked as processed during the apply/reject voting result
+931: Can't apply/reject the voting result before the proposal deadline

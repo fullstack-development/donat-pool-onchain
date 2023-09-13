@@ -161,6 +161,13 @@ getAllTxOutputs = phoistAcyclic $
     let txInfo = pfield @"txInfo" # ctx
      in pfield @"outputs" # txInfo
 
+getOnlyOneOutputByToken :: Term s (PCurrencySymbol :--> PTokenName :--> PScriptContext :--> PTxOut)
+getOnlyOneOutputByToken = phoistAcyclic $
+  plam $ \cs tn ctx ->
+    let outputs = getAllTxOutputs # ctx
+        outputsWithToken = pfilter # (outputContainsToken # cs # tn) # outputs
+     in getOnlyOneOutputFromList # outputsWithToken
+
 getOutputByAddress :: Term s (PScriptContext :--> PAddress :--> PTxOut)
 getOutputByAddress = phoistAcyclic $
   plam $ \ctx addr ->

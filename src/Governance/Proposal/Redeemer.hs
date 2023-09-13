@@ -33,6 +33,14 @@ data PProposalRedeemer (s :: S)
               ]
           )
       )
+    | PApplyProposal
+            (Term 
+          s 
+          ( PDataRecord
+              '[ "_0" ':= ProposalThreadCs
+              ]
+          )
+      )
   deriving stock (GHC.Generic)
   deriving anyclass (PlutusType, PIsData)
 
