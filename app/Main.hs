@@ -13,6 +13,8 @@ import MintingPolicy.VerToken (verTokenPolicy)
 import Plutarch
 import Ply.Plutarch
 import Protocol.Validator (protocolValidator)
+import StakingPool.StakingPoolInfo.Validator (stakingPoolInfoValidator)
+import StakingPool.Validator (stakingPoolValidator)
 
 -- Compiles scripts and put them to files in the "compiled" folder
 main :: IO ()
@@ -57,3 +59,11 @@ main = do
     "FeePool validator"
     "feePool.plutus"
     feePoolValidator
+  writeTypedScriptTraced
+    "StakingPool validator"
+    "stakingPool.plutus"
+    stakingPoolValidator
+  writeTypedScriptTraced
+    "StakingPoolInfo validator"
+    "stakingPoolInfo.plutus"
+    stakingPoolInfoValidator
