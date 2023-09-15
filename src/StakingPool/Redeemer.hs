@@ -12,7 +12,7 @@ data PStakingPoolRedeemer (s :: S)
   = PDepositWithCurrentEpoch (Term s (PDataRecord '["_0" ':= DaoTokensAmt, "_1" ':= ProviderPkh]))
   | POpenNewEpoch (Term s (PDataRecord '[]))
   | PWithdrawRewards (Term s (PDataRecord '[])) -- not implemented for now
-  | PWithdrawFull (Term s (PDataRecord '[])) -- not implemented for now
+  | PWithdrawInFull (Term s (PDataRecord '[])) -- not implemented for now
   deriving stock (Generic)
   deriving anyclass (PlutusType, PIsData)
 
