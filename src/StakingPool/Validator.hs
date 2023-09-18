@@ -24,7 +24,7 @@ stakingPoolValidator :: ClosedTerm (PStakingPool :--> PValidator)
 stakingPoolValidator = plam $ \stakingPool dtm rdm ctx -> P.do
   (dat, _) <- ptryFrom @PStakingPoolDatum dtm
   (red, _) <- ptryFrom @PStakingPoolRedeemer rdm
-  stPoolFields <- pletFields @["protocol", "verTokenCurrency", "daoCurrency", "daoTokenName"] stakingPool
+  stPoolFields <- pletFields @["protocol", "verTokenCurrency", "govCurrency", "govTokenName"] stakingPool
   protocolCurrency <- plet $ pfield @"protocolCurrency" # stPoolFields.protocol
   inputEpoch <- plet $ pfield @"currentEpoch" # dat
   inputValue <- plet $ getOwnInputValue # ctx
@@ -48,7 +48,7 @@ stakingPoolValidator = plam $ \stakingPool dtm rdm ctx -> P.do
         pguardC "1103" (calculatedEpoch #== inputEpoch)
         depositAmt <- pletC $ pfromData $ pfield @"_0" # redData
         providerPkh <- pletC $ pfromData $ pfield @"_1" # redData
-        checkDepositAmount depositAmt stPoolFields.daoCurrency stPoolFields.daoTokenName inputValue outputValue
+        checkDepositAmount depositAmt stPoolFields.govCurrency stPoolFields.govTokenName inputValue outputValue
         checkReceipt calculatedEpoch calculatedDayOfEpoch depositAmt stPoolFields.verTokenCurrency providerPkh txInfo 
         checkIsSignedBy "1109" providerPkh txInfo
         pguardC "1110" (dat #== outputDatum)
@@ -74,9 +74,9 @@ checkDepositAmount ::
   Term s SortedPositiveValue ->
   Term s SortedPositiveValue ->
   TermCont s ()
-checkDepositAmount depositAmt daoCurrency daoTokenName inputValue outputValue = do
+checkDepositAmount depositAmt govCurrency govTokenName inputValue outputValue = do
   pguardC "1104" (0 #< depositAmt)
-  additionalValue <- pletC $ Value.psingleton # daoCurrency # daoTokenName # depositAmt
+  additionalValue <- pletC $ Value.psingleton # govCurrency # govTokenName # depositAmt
   expectedOutputValue <- pletC $ Value.pforgetPositive inputValue <> additionalValue
   pguardC "1105" (Value.pforgetPositive outputValue #== expectedOutputValue)
 

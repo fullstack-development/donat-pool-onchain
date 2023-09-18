@@ -20,8 +20,8 @@ data PStakingPool (s :: S)
           ( PDataRecord
               '[ "protocol" ':= PProtocol
                , "verTokenCurrency" ':= PCurrencySymbol
-               , "daoCurrency" ':= PCurrencySymbol
-               , "daoTokenName" ':= PTokenName
+               , "govCurrency" ':= PCurrencySymbol
+               , "govTokenName" ':= PTokenName
                ]
           )
       )
@@ -36,8 +36,8 @@ instance PTryFrom PData (PAsData PStakingPool)
 data StakingPool = StakingPool
   { protocol :: Protocol
   , verTokenCurrency :: CurrencySymbol
-  , daoCurrency :: CurrencySymbol
-  , daoTokenName :: TokenName
+  , govCurrency :: CurrencySymbol
+  , govTokenName :: TokenName
   }
 
 type instance PlyArgOf PStakingPool = StakingPool
