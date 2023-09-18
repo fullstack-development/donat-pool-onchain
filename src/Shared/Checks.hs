@@ -84,3 +84,12 @@ checkPermittedDuration minDurationMinutes maxDurationMinutes startedAt deadline 
   let maxDuration = minutesToPosixDuration # maxDurationMinutes # startedAt
   let permittedDuration = pinterval # minDuration # maxDuration
   pguardC "126" (pmember # deadline # permittedDuration)
+
+checkExpectedMinting ::
+  Term s PString ->
+  Term s SortedNonZeroValue ->
+  Term s (PAsData PTxInfo) ->
+  TermCont s ()
+checkExpectedMinting errMsg expectedValue txInfo = do
+  mintValue <- pletC $ pnormalize # (pfield @"mint" # txInfo)
+  pguardC errMsg $ expectedValue #== mintValue

@@ -3,8 +3,6 @@ module FeePool.FeePoolInfo.Redeemer where
 import Plutarch.Api.V1.Time
 import Plutarch.DataRepr
 import Plutarch.Prelude
-import Protocol.Datum
-import Protocol.Model
 
 data PFeePoolInfoRedeemer (s :: S)
   = PAddRecord (Term s (PDataRecord '[]))

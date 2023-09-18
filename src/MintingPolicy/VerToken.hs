@@ -1,4 +1,4 @@
-module MintingPolicy.VerToken (verTokenPolicy, feePoolVerTokenName) where
+module MintingPolicy.VerToken (verTokenPolicy, feePoolVerTokenName, stakingPoolVerTokenName) where
 
 import FeePool.Models (feePoolThreadTokenName)
 import qualified GHC.Generics as GHC
@@ -12,15 +12,20 @@ import qualified PlutusLedgerApi.V1 as Plutus
 import qualified PlutusTx.Prelude as Plutus
 import Protocol.Model
 import Shared.Checks (checkMintingAmount, checkNftIsInTxInput, checkNftIsInTxOutput)
+import StakingPool.Models (stakingPoolThreadTokenName)
 
 feePoolVerTokenName :: Term s PTokenName
-feePoolVerTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "FeePoolVerToken")
+feePoolVerTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "FeePoolInfoVerToken")
+
+stakingPoolVerTokenName :: Term s PTokenName
+stakingPoolVerTokenName = pconstant $ Plutus.TokenName (Plutus.encodeUtf8 "StakingPoolInfoVerToken")
 
 data PVerTokenRedeemer (s :: S)
   = PMintVerToken (Term s (PDataRecord '["_0" ':= PTokenName]))
   | PBurnVerToken (Term s (PDataRecord '["_0" ':= PTokenName]))
   | PMintProposalVerToken (Term s (PDataRecord '["_0" ':= PTokenName]))
   | PMintFeePoolVerToken (Term s (PDataRecord '[]))
+  | PMintWithStakingPool (Term s (PDataRecord '["_0" ':= PTokenName]))
   deriving stock (GHC.Generic)
   deriving anyclass (Generic)
   deriving anyclass (PlutusType, PIsData)
@@ -58,4 +63,9 @@ verTokenPolicy = plam $ \protocol rdm' ctx -> P.do
     PMintFeePoolVerToken _ -> popaque . unTermCont $ do
       checkMintingAmount 1 feePoolVerTokenName ctx
       checkNftIsInTxInput protocolCurrency feePoolThreadTokenName ctx
+      pure $ pconstant ()
+    PMintWithStakingPool mintFields -> popaque . unTermCont $ do
+      let tokenName = pfield @"_0" # mintFields
+      checkMintingAmount 1 tokenName ctx
+      checkNftIsInTxInput protocolCurrency stakingPoolThreadTokenName ctx
       pure $ pconstant ()

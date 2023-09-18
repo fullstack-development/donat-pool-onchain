@@ -3,23 +3,19 @@
 module FeePool.Validator where
 
 import Ext.Plutarch.Extra.Time 
-import Ext.Plutus.MinAda
-import FeePool.Datum
-import FeePool.FeePoolInfo.Datum
-import FeePool.Models
-import FeePool.Redeemer
-import MintingPolicy.NFT (checkUTxOSpent)
-import MintingPolicy.VerToken
+import Ext.Plutus.MinAda (minTxOut, minAdaValue)
+import FeePool.Datum (PFeePoolDatum)
+import FeePool.FeePoolInfo.Datum (FeeAmount, PFeePoolInfoDatum)
+import FeePool.Models (PFeePool, feePoolThreadTokenName)
+import FeePool.Redeemer (PFeePoolRedeemer(..))
+import MintingPolicy.VerToken (feePoolVerTokenName)
 import qualified Plutarch.Api.V1.Value as Value
 import qualified Plutarch.Api.V1.AssocMap as PMap
 import Plutarch.Api.V2
-import Plutarch.Extra.Interval (pinterval)
 import Plutarch.Extra.TermCont
 import qualified Plutarch.Monadic as P
-import Plutarch.Num (pnegate, (#+), (#-))
+import Plutarch.Num ((#+), (#-))
 import Plutarch.Prelude
-import Protocol.Datum (PProtocolDatum)
-import Protocol.Model (PProtocolConfig, PProtocol, ProtocolConfig (..))
 import Shared.Checks 
 import Shared.ScriptContextV2
 
@@ -126,4 +122,4 @@ validateFeePoolInfoWithNewEpoch epoch dayOfEpoch feeAmount verTokenCurrency ctx 
   pguardC "1019" (Value.pforgetPositive outputValue #== expectedOutputValue)
 
   txInfo <- pletC $ getCtxInfoForSpending # ctx
-  checkNftMinted "1020" (1) verTokenCurrency feePoolVerTokenName txInfo
+  checkNftMinted "1020" 1 verTokenCurrency feePoolVerTokenName txInfo

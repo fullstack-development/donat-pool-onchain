@@ -11,6 +11,7 @@ import qualified Plutarch.Monadic as P
 import Plutarch.Prelude hiding (psingleton)
 
 type SortedPositiveValue = PValue 'Sorted 'Positive
+type SortedNonZeroValue = PValue 'Sorted 'NonZero
 
 inlineDatumFromOutput :: Term s (PTxOut :--> PData)
 inlineDatumFromOutput = phoistAcyclic $
@@ -228,3 +229,15 @@ pubKeyOutputContainsValue = phoistAcyclic $
       plam $ \value txOut ->
         let txOutValue = Value.pforgetPositive $ pfield @"value" # txOut
          in txOutValue #== value
+
+pubKeyOutputContainsToken :: Term s (PPubKeyHash :--> PCurrencySymbol :--> PTokenName :--> PInteger :--> PAsData PTxInfo :--> PBool)
+pubKeyOutputContainsToken = phoistAcyclic $
+  plam $ \pkh curSymbol tokenName amt txInfo ->
+    let pkhOutputs = pubKeyOutputsAt # pkh # txInfo
+     in pany # (matches # curSymbol # tokenName # amt) # pkhOutputs
+  where
+    matches :: Term s (PCurrencySymbol :--> PTokenName :--> PInteger :--> PTxOut :--> PBool)
+    matches = phoistAcyclic $
+      plam $ \cs tn amt txOut ->
+        let tokenAmt = Value.pvalueOf # (pfield @"value" # txOut) # cs # tn
+         in tokenAmt #== amt

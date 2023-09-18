@@ -113,7 +113,7 @@
 915: Proposal applied field value should not be changed during the Vote transaction
 916: Should mint Vote receipt during the vote transaction
 
-## FeePool & FeePoolInfo
+## FeePool.Validator & FeePool.FeePoolInfo.Validator
 1001: Input value must be the same as output value while adding a record to FeePoolInfo
 1002: FeePoolInfo verification token missed in transaction input while adding new record to datum
 1003: FeePool thread token missed in transaction input
@@ -134,3 +134,26 @@
 1018: Unexpected fee map in FeePoolInfo output datum while receiving funds with new epoch
 1019: Unexpected FeePoolInfo output value while receiving funds with new epoch
 1020: FeePoolInfo verification token not minted while receiving funds with new epoch
+
+## StakingPool.Validator & StakingPool.StakingPoolInfo.Validator
+1101: StakingPool thread token missed in StakingPool input UTxO
+1102: StakingPool thread token missed in StakingPool output UTxO
+1103: Calculated epoch must be the same as current epoch while depositing to StakingPool with current epoch
+1104: Deposit amount must be greater than 0 while depositing to Staking Pool
+1105: Unexpected output value in StakingPool while depositing dao tokens
+1106: StakingPoolTokenName length limits exceeded
+1107: Unexpected value minted while depositing to StakingPool
+1108: Staking receipt not sent to provider
+1109: Deposit to StakingPool transaction not signed by provider
+1110: StakingPool datum mustn't change while depositing to StakingPool
+1111: StakingPoolInfo input and output epoch must be the same while depositing to StakingPool
+1112: Unexpected Dao tokens amount in output StakingPoolInfo datum
+1113: Calculated epoch must be greater than input epoch
+1114: Calculated epoch must be equal to output epoch
+1115: StakingPool OpenNewEpoch transaction not signed bu manager
+1116: Unexpected minting while opening a new epoch in StakingPool
+1117: Unexpected epoch in StakingPoolInfo output datum while opening a new epoch
+1118: Unexpected history in StakingPoolInfo output datum while opening a new epoch
+1119: StakingPoolInfo input and output values must be the same
+1120: StakingPoolVerToken missed in StakingPoolInfo input
+1121: Unexpected StakingPoolInfo output value
